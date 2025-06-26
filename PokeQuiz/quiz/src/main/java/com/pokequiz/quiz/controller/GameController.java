@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/quiz/game")
+@CrossOrigin(origins = "http://localhost:3000")
 public class GameController {
 
     private final GameService gameService;
@@ -65,4 +66,5 @@ public class GameController {
     public ResponseEntity<?> graduallyIncreasingDifficulty(@RequestParam int limit)  {
         return ResponseEntity.ok(gameService.graduallyIncreasingDifficulty(limit));
     }
+
 }

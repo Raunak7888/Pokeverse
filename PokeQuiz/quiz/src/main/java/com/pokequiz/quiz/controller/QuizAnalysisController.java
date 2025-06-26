@@ -10,14 +10,15 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/analysis")
-@CrossOrigin(origins = "http://127.0.0.1:5500")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class QuizAnalysisController {
 
     private final QuizAnalysisService quizAnalysisService;
 
     @PostMapping("/{sessionId}")
     public ResponseEntity<?> analyzeQuiz(@PathVariable Long sessionId) {
+        System.out.println("bale bale");
         QuizAnalysis analysis = quizAnalysisService.analyzeQuiz(sessionId);
         return analysis != null ? ResponseEntity.ok(analysis) : ResponseEntity.badRequest().body("Failed to analyze quiz.");
     }

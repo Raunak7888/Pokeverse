@@ -8,7 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -37,10 +39,11 @@ public class RoomService {
     }
 
     public String joinRoom(Long roomId, PlayerDto playerDto) {
-        Room room = roomRepository.findById(roomId).orElseThrow(() -> new RuntimeException("Room not found"));
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
 
         if (room.getPlayers().size() >= room.getMaxPlayers()) {
-            throw new RuntimeException("Room is full");
+            return "Room is full";
         }
 
         Player player = new Player();
@@ -51,9 +54,19 @@ public class RoomService {
 
         playerRepository.save(player);
 
-        messagingTemplate.convertAndSend("/topic/rooms/" + roomId + "/game", player);
+        // Build payload with extra info like profilePicUrl from PlayerDto
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("id", player.getId());
+        payload.put("userId", player.getUserId());
+        payload.put("name", player.getName());
+        payload.put("score", player.getScore());
+        payload.put("profilePicUrl", playerDto.getProfilePicUrl()); // Include DTO-only field
+
+        messagingTemplate.convertAndSend("/topic/rooms/" + roomId + "/game", payload);
+
         return "Joined room successfully";
     }
+
 
     public Room getRoom(Long roomId) {
         return roomRepository.findById(roomId).orElseThrow(() -> new RuntimeException("Room not found"));

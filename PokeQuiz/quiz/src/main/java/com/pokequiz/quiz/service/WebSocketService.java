@@ -5,19 +5,23 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pokequiz.quiz.dto.DetailedAnswer;
+import com.pokequiz.quiz.dto.GameQuestionDto;
 import com.pokequiz.quiz.dto.StatsDTO;
 import com.pokequiz.quiz.dto.WsAnswerValidationDTO;
 import com.pokequiz.quiz.model.*;
 import com.pokequiz.quiz.repository.*;
 import jakarta.persistence.Tuple;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -67,6 +71,7 @@ public class WebSocketService {
     }
 
     public void sendQuestion(Long roomId, Long hostId) {
+        AtomicInteger rounds = new AtomicInteger();
         // Avoid starting multiple schedulers for the same room
         roomSchedulers.computeIfAbsent(roomId, id -> {
             ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -107,8 +112,13 @@ public class WebSocketService {
                         stopBroadcasting(roomId);
                         return;
                     }
+                    rounds.incrementAndGet();
+                    GameQuestionDto gameQuestionDto = new GameQuestionDto(question, rounds);
+                    messagingTemplate.convertAndSend("/topic/rooms/" + roomId + "/game", gameQuestionDto);
+                    System.out.println("Broadcasting question "+ rounds +" to room " + roomId + ": " + question.getQuestion());
 
-                    messagingTemplate.convertAndSend("/topic/rooms/" + roomId + "/game", question);
+
+
 
                     // Increment round and save question to RoomQuiz
                     room.setCurrentRound(room.getCurrentRound() + 1);
@@ -117,16 +127,16 @@ public class WebSocketService {
                     roomQuiz.setQuestion(question);
                     roomQuizRepository.save(roomQuiz);
 
-                    // Create PlayerAnswer entries for all players
-                    List<Player> players = playerRepository.findByRoomId(roomId);
-                    for (Player player : players) {
-                        PlayerAnswer playerAnswer = new PlayerAnswer();
-                        playerAnswer.setPlayer(player);
-                        playerAnswer.setRoomQuiz(roomQuiz);
-                        playerAnswer.setCorrect(false);
-                        playerAnswer.setAnswer(""); // Use empty string or placeholder
-                        playerAnswerRepository.save(playerAnswer);
-                    }
+//                     Create PlayerAnswer entries for all players
+//                    List<Player> players = playerRepository.findByRoomId(roomId);
+//                    for (Player player : players) {
+//                        PlayerAnswer playerAnswer = new PlayerAnswer();
+//                        playerAnswer.setPlayer(player);
+//                        playerAnswer.setRoomQuiz(roomQuiz);
+//                        playerAnswer.setCorrect(false);
+//                        playerAnswer.setAnswer(""); // Use empty string or placeholder
+//                        playerAnswerRepository.save(playerAnswer);
+//                    }
                     roomRepository.save(room);
                     System.out.println("Sent question to room: " + roomId);
 
@@ -165,95 +175,160 @@ public class WebSocketService {
 
 
     public void validateAnswer(WsAnswerValidationDTO answer) {
-        Room room = roomRepository.findById(answer.getRoomId()).orElseThrow(() -> new RuntimeException("Room not found"));
-//        if (room.isEnded() || !room.isStarted()) {
-//            messagingTemplate.convertAndSend("/topic/rooms/" + answer.getRoomId() + "/game", "Game has ended");
-//            return;
-//        }
-        if(answer.getAnswer() == null){
-            messagingTemplate.convertAndSend("/topic/rooms/" + answer.getRoomId() + "/game", "Answer cannot be Null");
+        System.out.println("📩 [validateAnswer] Received answer from User ID: " + answer.getUserId());
+
+        // 1. Validate Room
+        Room room = roomRepository.findById(answer.getRoomId())
+                .orElseThrow(() -> new RuntimeException("Room not found: ID = " + answer.getRoomId()));
+
+        // 2. Validate non-null answer
+        if (answer.getAnswer() == null || answer.getAnswer().trim().isEmpty()) {
+            System.err.println("❗ Answer is null or empty");
+            messagingTemplate.convertAndSend("/topic/rooms/" + answer.getRoomId() + "/game", "Answer cannot be null");
             return;
         }
-        Question question = questionRepository.findById(answer.getQuestionId()).orElseThrow(() -> new RuntimeException("Question not found"));
-        Answer correctAnswer = answerRepository.findByQuestion(question);
-        Player player = playerRepository.findById(answer.getUserId()).orElseThrow(() -> new RuntimeException("Player not found"));
 
-        // Fetch the RoomQuiz once and reuse it
+        // 3. Get question and correct answer
+        Question question = questionRepository.findById(answer.getQuestionId())
+                .orElseThrow(() -> new RuntimeException("Question not found: ID = " + answer.getQuestionId()));
+        Answer correctAnswer = answerRepository.findByQuestion(question);
+
+        // 4. Get player
+        Player player = playerRepository.findById(answer.getUserId())
+                .orElseThrow(() -> new RuntimeException("Player not found: ID = " + answer.getUserId()));
+
+        // 5. Get RoomQuiz
         RoomQuiz roomQuiz = roomQuizRepository.findByRoomAndQuestion(room, question);
         if (roomQuiz == null) {
-            messagingTemplate.convertAndSend("/topic/rooms/" + answer.getRoomId() + "/game", "Question not found");
+            System.err.println("❗ RoomQuiz not found for question in room");
+            messagingTemplate.convertAndSend("/topic/rooms/" + answer.getRoomId() + "/game", "Question not found in this room");
             return;
         }
 
-        // Retrieve the player's answer (handle case where no answer exists yet)
-        PlayerAnswer playerAnswer = playerAnswerRepository.findByPlayerAndRoomQuiz(player, roomQuiz);
-        if (playerAnswer == null) {
-            messagingTemplate.convertAndSend("/topic/rooms/" + answer.getRoomId() + "/game", "Player answer not found");
-            return;
-        }
-
-        // Prepare the response DTO
-        WsAnswerValidationDTO answerValidationDTO = new WsAnswerValidationDTO();
-        answerValidationDTO.setRoomId(answer.getRoomId());
-        answerValidationDTO.setUserId(answer.getUserId());
-        answerValidationDTO.setQuestionId(answer.getQuestionId());
-        answerValidationDTO.setAnswer(answer.getAnswer());
-
-        // Check if the answer is correct
+        // 6. Validate correctness
         boolean isCorrect = answer.getAnswer().equalsIgnoreCase(correctAnswer.getCorrectAnswer());
 
-        // Update player's answer and correctness
+        // 7. Create PlayerAnswer
+        PlayerAnswer playerAnswer = new PlayerAnswer();
+        playerAnswer.setPlayer(player);
+        playerAnswer.setRoomQuiz(roomQuiz);
         playerAnswer.setAnswer(answer.getAnswer());
         playerAnswer.setCorrect(isCorrect);
+        playerAnswerRepository.save(playerAnswer);
 
-
-        // Update player's score if correct
+        // 8. Update score if correct
         if (isCorrect) {
             player.setScore(player.getScore() + 10);
+            player.setCreatedAt(LocalDateTime.now());
             playerRepository.save(player);
-            playerAnswerRepository.save(playerAnswer);
-            answerValidationDTO.setCorrect(true);
+            System.out.println("✅ Correct answer! +10 points to player ID: " + player.getId());
+        } else {
+            System.out.println("❌ Incorrect answer from player ID: " + player.getId());
         }
 
-        // Save wrong answer
-        playerAnswerRepository.save(playerAnswer);
-        answerValidationDTO.setCorrect(isCorrect);
-        messagingTemplate.convertAndSend("/topic/rooms/" + answer.getRoomId() + "/game", answerValidationDTO);
+        // 9. Build response DTO
+        WsAnswerValidationDTO response = new WsAnswerValidationDTO();
+        response.setRoomId(answer.getRoomId());
+        response.setUserId(answer.getUserId());
+        response.setQuestionId(answer.getQuestionId());
+        response.setAnswer(answer.getAnswer());
+        response.setCorrect(isCorrect);
+
+        // 10. Broadcast result
+        messagingTemplate.convertAndSend("/topic/rooms/" + answer.getRoomId() + "/game", response);
+        System.out.println("📤 Answer validation broadcasted for player ID: " + player.getId());
     }
 
-    public void sendStats(Long roomId) {
-        List<Tuple> results = playerAnswerRepository.findByRoomId(roomId);
-        System.out.println(results);
+    public ResponseEntity<?> sendStats(Long roomId, Long playerId) {
+        System.out.println("📨 [WebSocket] Entered sendStats()");
+        System.out.println("➡️ [Input] roomId: " + roomId + ", playerId: " + playerId);
 
-        List<StatsDTO> statsList = results.stream().map(tuple -> {
-            Long userId = tuple.get("userId", Long.class);
-            String username = tuple.get("username", String.class);
-            int totalPoints = (int) tuple.get("totalPoints");
+        Optional<Room> room = roomRepository.findById(roomId);
+        if (room.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body("Room not found with ID: " + roomId);
+        }
+        System.out.println("✅ [Room Found] " + room.get());
 
-            List<DetailedAnswer> detailedAnswers = new ArrayList<>();
+        Optional<Player> player = playerRepository.findById(playerId);
+        if (player.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body("Player not found with ID: " + playerId);
+        }
+        System.out.println("✅ [Player Found] " + player.get());
 
-            String detailedAnswersJson = tuple.get("detailedAnswers", String.class);
-            if (detailedAnswersJson != null) {
-                try {
-                    JsonNode jsonNode = new ObjectMapper().readTree(detailedAnswersJson);
-                    jsonNode.forEach(answer -> {
-                        detailedAnswers.add(new DetailedAnswer(
-                                answer.get("questionId").asLong(),
-                                answer.get("correctAnswer").asText(),
-                                answer.get("userAnswer").asText(),
-                                answer.get("isCorrect").asBoolean()
-                        ));
-                    });
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException("Error processing JSON", e);
-                }
+        List<PlayerAnswer> playerAnswers = playerAnswerRepository.findByPlayer(player.get());
+        if (playerAnswers.isEmpty()) {
+            return ResponseEntity.ok()
+                    .body("No answers found for player ID: " + playerId);
+        }
+        System.out.println("🧾 [Answers Retrieved] Count: " + playerAnswers.size());
+
+        playerAnswers.sort(Comparator.comparing(PlayerAnswer::getCreatedAt));
+        System.out.println("🔃 [Answers Sorted] By createdAt");
+
+        List<RoomQuiz> roomQuizzes = roomQuizRepository.findAllByRoom(room.get());
+        if (roomQuizzes.isEmpty()) {
+            return ResponseEntity.ok()
+                    .body("No quizzes found for room ID: " + roomId);
+        }
+        System.out.println("🧾 [RoomQuizzes Retrieved] Count: " + roomQuizzes.size());
+
+        roomQuizzes.sort(Comparator.comparing(RoomQuiz::getCreatedAt));
+        System.out.println("🔃 [RoomQuizzes Sorted] By createdAt");
+
+        List<DetailedAnswer> detailedAnswers = new ArrayList<>();
+
+        for (int i = 0; i < playerAnswers.size(); i++) {
+            RoomQuiz roomQuiz = roomQuizzes.get(i);
+            PlayerAnswer playerAnswer = playerAnswers.get(i);
+
+            System.out.println("🔍 [Processing Pair #" + i + "]");
+            System.out.println("   ⌛ RoomQuiz CreatedAt: " + roomQuiz.getCreatedAt());
+            System.out.println("   ⌛ PlayerAnswer CreatedAt: " + playerAnswer.getCreatedAt());
+
+            Answer correctAnswer = answerRepository.findByQuestionId(roomQuiz.getQuestion().getId());
+            if (correctAnswer == null) {
+                System.err.println("⚠️ [No Answer Found] for Question ID: " + roomQuiz.getQuestion().getId());
+                continue;
             }
 
-            return new StatsDTO(userId, username, totalPoints, detailedAnswers);
-        }).collect(Collectors.toList());
+            DetailedAnswer detailedAnswer = getDetailedAnswer(playerAnswer, roomQuiz, correctAnswer);
 
-        // Send the entire stats list as a single message
-        messagingTemplate.convertAndSend("/topic/rooms/" + roomId + "/game", statsList);
+            detailedAnswers.add(detailedAnswer);
+
+            System.out.println("   ✅ [Detailed Answer] " + detailedAnswer);
+        }
+
+        StatsDTO statsDTO = new StatsDTO();
+        statsDTO.setUserId(player.get().getId());
+        statsDTO.setUsername(player.get().getName());
+        statsDTO.setTotalPoints(player.get().getScore());
+        statsDTO.setDetailedAnswers(detailedAnswers);
+
+        System.out.println("📦 [Payload Ready] Broadcasting to /topic/rooms/" + roomId + "/game");
+        System.out.println("🧾 [StatsDTO] " + statsDTO);
+
+
+        System.out.println("✅ [Broadcast Complete]");
+        return ResponseEntity.ok(statsDTO);
     }
+
+    private static DetailedAnswer getDetailedAnswer(PlayerAnswer playerAnswer, RoomQuiz roomQuiz, Answer correctAnswer) {
+        int timeTaken = playerAnswer.getCreatedAt().minusSeconds(roomQuiz.getCreatedAt().getSecond()).getSecond();
+
+        DetailedAnswer detailedAnswer = new DetailedAnswer();
+        detailedAnswer.setQuestionId(roomQuiz.getQuestion().getId());
+        detailedAnswer.setQuestion(roomQuiz.getQuestion().getQuestion());
+        detailedAnswer.setCorrect(playerAnswer.isCorrect());
+        detailedAnswer.setCorrectAnswer(correctAnswer.getCorrectAnswer());
+        detailedAnswer.setSelectedOption(playerAnswer.getAnswer());
+        detailedAnswer.setTimeTaken(timeTaken);
+        return detailedAnswer;
+    }
+
+
+
+
 
 }

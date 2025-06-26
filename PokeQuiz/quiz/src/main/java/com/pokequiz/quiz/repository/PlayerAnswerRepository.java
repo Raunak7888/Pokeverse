@@ -14,28 +14,29 @@ import java.util.List;
 @Repository
 public interface PlayerAnswerRepository extends JpaRepository<PlayerAnswer, Long> {
     PlayerAnswer findByPlayerAndRoomQuiz(Player player, RoomQuiz roomQuiz);
+
     @Query(value = """
     SELECT 
-        p.user_id AS userId,
+        pa.player_id AS userId,
         p.name AS username,
-        p.score AS totalPoints,
-        jsonb_agg(
-            jsonb_build_object(
-                'questionId', pa.quiz_id,
-                'correctAnswer', a.correct_answer,
-                'userAnswer', pa.answer,
-                'isCorrect', pa.correct
-            )
-        ) AS detailedAnswers
-    FROM players p
-    JOIN player_answers pa ON p.id = pa.player_id
-    JOIN room_quizzes rq ON pa.quiz_id = rq.quiz_id
-    JOIN answers a ON pa.quiz_id = a.question_id
-    WHERE p.room_id = :roomId
-    GROUP BY p.user_id, p.name, p.score
-    ORDER BY p.user_id
-""", nativeQuery = true)
-    List<Tuple> findByRoomId(@Param("roomId") Long roomId);
+        rq.id AS quizId,
+        SUM(CASE WHEN pa.correct THEN 10 ELSE 0 END) AS totalPoints,
+        '[' || string_agg(
+            '{"questionId":' || rq.id ||
+            ',"selectedOption":"' || pa.answer ||
+            '","correct":' || pa.correct ||
+            ',"timeTaken":0}', 
+        ',') || ']' AS detailedAnswers
+    FROM player_answers pa
+    JOIN players p ON p.id = pa.player_id
+    JOIN room_quizzes rq ON pa.quiz_id = rq.quiz_id AND rq.room_id = :roomId
+    WHERE pa.player_id = :playerId
+    GROUP BY pa.player_id, p.name, rq.id
+    """, nativeQuery = true)
+    List<Tuple> findByPlayerIdAndRoomId(@Param("playerId") Long playerId, @Param("roomId") Long roomId);
+    List<PlayerAnswer> findByPlayer(Player player);
+
+
 
 
 }

@@ -16,4 +16,7 @@ public interface RoomQuizRepository extends JpaRepository<RoomQuiz, Long> {
 
     @Query("SELECT rq.question.id FROM RoomQuiz rq WHERE rq.room.id = :roomId")
     List<Long> findQuestionIdsByRoomId(@Param("roomId") Long roomId);
+
+    List<RoomQuiz> findAllByRoom(Room room);
+
 }

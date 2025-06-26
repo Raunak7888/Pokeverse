@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/sessions")
-@CrossOrigin(origins = "http://127.0.0.1:5500")
+@CrossOrigin(origins = "http://localhost:3000")
 public class QuizSessionController {
 
     private final QuizSessionService quizSessionService;
@@ -19,18 +19,15 @@ public class QuizSessionController {
         this.quizSessionService = quizSessionService;
     }
 
-    // 🎯 Create a new Quiz Session
     @PostMapping("/create")
     public ResponseEntity<?> createSession(@RequestBody QuizSessionDTO dto) {
         if (dto.getUserId() == null || dto.getTotalQuestions() <= 0 ||
                 dto.getDifficulty() == null || dto.getRegion() == null || dto.getQuizType() == null) {
             return ResponseEntity.badRequest().body("Invalid request body");
         }
-        QuizSession session = quizSessionService.createSession(dto);
-        return ResponseEntity.ok(session);
+        return ResponseEntity.ok(quizSessionService.createSession(dto));
     }
 
-    // 🔄 Update Quiz Session (endTime and status)
     @PutMapping("/update/{sessionId}")
     public ResponseEntity<?> updateSession(
             @PathVariable Long sessionId,

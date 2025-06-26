@@ -2,6 +2,7 @@ package com.pokequiz.quiz.service;
 
 import com.pokequiz.quiz.model.Question;
 import com.pokequiz.quiz.repository.QuestionRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -62,5 +63,42 @@ public class GameService {
     public Question getRandomQuizExcluding(List<Long> excludedIds) {
         return questionRepository.findRandomQuestionExcluding(excludedIds);
     }
+
+    public ResponseEntity<?> fetchQuizzes(
+            String region,
+            String difficulty,
+            String quizType,
+            Integer limit,
+            Boolean gradual
+    ) {
+        // Normalize "all" values to null
+        region = ("all".equalsIgnoreCase(region)) ? null : region;
+        difficulty = ("all".equalsIgnoreCase(difficulty)) ? null : difficulty;
+        quizType = ("all".equalsIgnoreCase(quizType)) ? null : quizType;
+
+        if (Boolean.TRUE.equals(gradual) && limit != null) {
+            return ResponseEntity.ok(graduallyIncreasingDifficulty(limit));
+        }
+
+        if (region == null && difficulty == null && quizType == null && limit != null) {
+            return ResponseEntity.ok(getRandomQuizzes(limit));
+        }
+
+        if (limit != null) {
+            return ResponseEntity.ok(
+                    getRandomQuizzesAsPerDifficultyAndRegion(region, difficulty, quizType, limit)
+            );
+        }
+
+        if (region != null || difficulty != null || quizType != null) {
+            return ResponseEntity.ok(
+                    getQuizzesByRegionAndDifficulty(region, difficulty, quizType)
+            );
+        }
+
+        return ResponseEntity.badRequest()
+                .body("Please provide at least one filter (region, difficulty, quizType) or a limit.");
+    }
+
 
 }

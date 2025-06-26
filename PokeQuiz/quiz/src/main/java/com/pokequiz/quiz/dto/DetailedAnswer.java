@@ -9,7 +9,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DetailedAnswer {
     private Long questionId;
+    private String question;
     private String correctAnswer;
-    private String userAnswer;
     private boolean isCorrect;
+    private String selectedOption;
+    private int timeTaken; // in seconds
+
+
 }

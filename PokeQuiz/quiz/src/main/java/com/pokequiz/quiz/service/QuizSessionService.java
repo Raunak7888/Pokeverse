@@ -6,20 +6,24 @@ import com.pokequiz.quiz.repository.QuizSessionRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
 public class QuizSessionService {
 
     private final QuizSessionRepository quizSessionRepository;
+    private final GameService gameService;
 
-    public QuizSessionService(QuizSessionRepository quizSessionRepository) {
+    public QuizSessionService(QuizSessionRepository quizSessionRepository, GameService gameService) {
         this.quizSessionRepository = quizSessionRepository;
+        this.gameService = gameService;
     }
 
     // 🎯 Create a new quiz session
-    public QuizSession createSession(QuizSessionDTO dto) {
+    public Map<String, Object> createSession(QuizSessionDTO dto) {
         QuizSession newSession = QuizSession.builder()
                 .userId(dto.getUserId())
                 .difficulty(dto.getDifficulty())
@@ -29,8 +33,19 @@ public class QuizSessionService {
                 .status(QuizSession.SessionStatus.IN_PROGRESS)
                 .build();
 
-        return quizSessionRepository.save(newSession);
+        quizSessionRepository.save(newSession);
+
+        Object quizzes = gameService.fetchQuizzes(
+                dto.getRegion(), dto.getDifficulty(), dto.getQuizType(), dto.getTotalQuestions(), false
+        ).getBody();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("session", newSession);
+        response.put("quizzes", quizzes);
+
+        return response;
     }
+
 
     // 🔄 Update quiz session (endTime + status)
     public QuizSession updateSession(Long sessionId, QuizSession.SessionStatus status) {

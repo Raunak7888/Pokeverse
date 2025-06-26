@@ -261,12 +261,12 @@ public class RoundService {
         }
     }
 
-    public void reset(){
-        Room room = roomRepository.findById(1L).orElseThrow();
-        room.setEnded(false);
-        room.setCurrentRound(0);
-        roomRepository.save(room);
-    }
+//    public void reset(){
+//        Room room = roomRepository.findById(1L).orElseThrow();
+//        room.setEnded(false);
+//        room.setCurrentRound(0);
+//        roomRepository.save(room);
+//    }
 
 
     public void getStats(Long roomId) {

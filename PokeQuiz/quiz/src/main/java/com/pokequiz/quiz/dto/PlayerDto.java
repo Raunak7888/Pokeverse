@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public class PlayerDto {
     private Long userId;
     private String name;
+    private String profilePicUrl;
     private int score;
     private Long roomId;
     private LocalDateTime createdAt;

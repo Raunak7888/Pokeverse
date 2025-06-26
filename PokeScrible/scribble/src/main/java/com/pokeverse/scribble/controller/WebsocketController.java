@@ -20,6 +20,11 @@ public class WebsocketController {
     private final WebSocketService webSocketService;
     private final RoundService roundService;
 
+    /**
+     Hey The Swagger does not support the websocket documentation that why I am adding a markdown file to document the
+        websocket endpoints. Markdown is in the Markdown package.
+     */
+
     @MessageMapping("/chat/{roomId}")
     public void chat(@DestinationVariable Long roomId, MessageDTO messageDto) {
         webSocketService.sendMessage(roomId,messageDto);
