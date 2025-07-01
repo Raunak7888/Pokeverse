@@ -3,6 +3,11 @@ package com.pokequiz.quiz.controller;
 import com.pokequiz.quiz.dto.Message;
 import com.pokequiz.quiz.dto.WsAnswerValidationDTO;
 import com.pokequiz.quiz.service.WebSocketService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.*;
@@ -42,6 +47,18 @@ public class WebSocketController {
     }
 
     @GetMapping("/ws/stats/{roomId}/{playerId}")
+    @Operation(summary = "Get real-time player statistics",
+            description = "Retrieves real-time statistics for a specific player within a given room. " +
+                    "Note: This is an HTTP endpoint, not a WebSocket channel.",
+            parameters = {
+                    @Parameter(name = "roomId", description = "Unique identifier of the quiz room", required = true, example = "101"),
+                    @Parameter(name = "playerId", description = "Unique identifier of the player", required = true, example = "202")
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successfully retrieved player statistics",
+                            content = @Content(schema = @Schema(implementation = ResponseEntity.class))), // Assuming it returns a generic ResponseEntity wrapped response
+                    @ApiResponse(responseCode = "404", description = "Room or player not found, or stats unavailable")
+            })
     public ResponseEntity<?> sendStats(@PathVariable Long roomId, @PathVariable Long playerId) {
         return wsService.sendStats(roomId,playerId);
     }
