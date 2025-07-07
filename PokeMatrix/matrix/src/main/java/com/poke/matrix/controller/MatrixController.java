@@ -30,6 +30,11 @@ public class MatrixController {
         this.matrixService = matrixService;
     }
 
+    @GetMapping("/test")
+    public ResponseEntity<String> test() {
+        return ResponseEntity.ok("Hello from MatrixController!");
+    }
+
     @Operation(summary = "Generate a new matrix",
             description = "Creates a new game matrix with specified rows and columns for a user.")
     @ApiResponses(value = {
