@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 @Controller
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://127.0.0.1:5500", allowCredentials = "true")
 public class WebsocketController {
 
     private final WebSocketService webSocketService;
