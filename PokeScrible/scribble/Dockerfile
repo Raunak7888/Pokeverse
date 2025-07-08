@@ -1,4 +1,4 @@
-# Build Stage (Multi-Stage Build for Smaller Image)
+# Build Stage
 FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
@@ -15,8 +15,15 @@ WORKDIR /app
 # Copy built JAR from the build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose the port (Scribble Service)
-EXPOSE ${SCRIBBLE_PORT}
+# Expose fallback port for documentation (e.g., 8086)
+EXPOSE 8086
 
-# Run the Scribble Service with dynamic environment variables
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Run the Scribble Service with prod profile and dynamic env config
+ENTRYPOINT ["sh", "-c", "java \
+  -Dspring.profiles.active=prod \
+  -Dserver.port=${SCRIBBLE_PORT:-8086} \
+  -Dspring.datasource.url=${DB_URL} \
+  -Dspring.datasource.username=${DB_USER} \
+  -Dspring.datasource.password=${DB_PASS} \
+  -Deureka.client.service-url.defaultZone=${EUREKA_DEFAULT_ZONE} \
+  -jar app.jar"]

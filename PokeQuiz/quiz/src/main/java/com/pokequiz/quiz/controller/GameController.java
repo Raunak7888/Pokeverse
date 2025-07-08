@@ -25,10 +25,10 @@ public class GameController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful response",
                             content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json",
-                                    schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"response\": \"Hello from quiz service\"}")))
+                                    schema = @io.swagger.v3.oas.annotations.media.Schema(example = "Hello from quiz service")))
             })
     public ResponseEntity<?> hello() {
-        return ResponseEntity.ok("{\"response\": \"Hello from quiz service\"}"); // Correct JSON formatting
+        return ResponseEntity.ok("Hello from quiz service");
     }
 
     @GetMapping("/all")
