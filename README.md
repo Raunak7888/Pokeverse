@@ -362,7 +362,7 @@ Contributions are highly welcome\! Whether it's adding new features, improving e
 
 **Raunak Yadav**
 
-  * [Frontend repo](https://www.google.com/search?q=link-to-your-frontend-repo)
+  * [Frontend repo](https://github.com/Raunak7888/PokeverseFrontend.git)
 
 -----
 
