@@ -12,6 +12,8 @@ import java.util.Date;
 public class JwtUtil {
 
     private final Key signingKey;
+    @Value("${jwt.expiration-ms}")
+    long jwtExpirationMs;
 
     public JwtUtil(@Value("${secret}") String secretKey) {
         this.signingKey = Keys.hmacShaKeyFor(secretKey.getBytes());
@@ -22,7 +24,7 @@ public class JwtUtil {
                 .setSubject(email)
                 .claim("userId", userId)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 day
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs)) // 1 day
                 .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
     }

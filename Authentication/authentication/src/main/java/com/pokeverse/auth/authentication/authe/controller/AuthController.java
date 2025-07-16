@@ -109,7 +109,7 @@ public class AuthController {
 
         RToken rToken = RToken.builder()
                 .token(refreshToken)
-                .expirationTime(LocalDateTime.now().plusDays(2))
+                .expirationTime(userService.getRefreshTokenExpiry())
                 .userId(user)
                 .build();
         rTokenRepository.save(rToken);

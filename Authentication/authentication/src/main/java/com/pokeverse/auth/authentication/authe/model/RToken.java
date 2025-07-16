@@ -17,14 +17,16 @@ public class RToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String token;
+
 
     @Column(nullable = false)
     private LocalDateTime expirationTime;
 
     @OneToOne
-    @JoinColumn(name = "userId", referencedColumnName = "id", nullable = false)
-    private User userId;
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    private User user;
+
 
 }
