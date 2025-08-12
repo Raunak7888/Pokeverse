@@ -1,0 +1,123 @@
+# =========================
+# General Configuration
+# =========================
+spring:
+  application:
+    name: apiGateway
+  profiles:
+    active: dev
+
+  codec:
+    max-in-memory-size: 16KB
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+
+
+      routes:
+        - id: auth
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/authentication/**
+          filters:
+            - StripPrefix=1
+
+        - id: quiz
+          uri: lb://QUIZ-SERVICE
+          predicates:
+            - Path=/quiz/**
+          filters:
+            - StripPrefix=1
+
+        - id: matrix
+          uri: lb://MATRIX-SERVICE
+          predicates:
+            - Path=/matrix/**
+          filters:
+            - StripPrefix=1
+
+        - id: dex
+          uri: lb://DEX-SERVICE
+          predicates:
+            - Path=/dex/**
+          filters:
+            - StripPrefix=1
+
+        - id: scribble
+          uri: lb://SCRIBBLE-SERVICE
+          predicates:
+            - Path=/scribble/**
+          filters:
+            - StripPrefix=1
+
+        - id: health
+          uri: http://localhost:${server.port}
+          predicates:
+            - Path=/actuator/health
+
+# =========================
+# Actuator Configuration
+# =========================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,gateway
+  endpoint:
+    health:
+      show-details: always
+
+# =========================
+# Logging Configuration
+# =========================
+logging:
+  level:
+    org.springframework: INFO
+
+# =========================
+# Server Configuration
+# =========================
+server:
+  max-http-header-size: 16KB
+
+# =========================
+# Rate Limiting Configuration
+# =========================
+ratelimit:
+  configs:
+    auth:
+      auth_test:
+        IP:
+          capacity: 5
+          refillRatePerSecond: 0.1
+
+    dex:
+      api_test:
+        IP:
+          capacity: 5
+          refillRatePerSecond: 0.1
+
+    matrix:
+      api_matrix_test:
+        IP:
+          capacity: 5
+          refillRatePerSecond: 0.1
+
+    scribble:
+      api_room_test:
+        IP:
+          capacity: 5
+          refillRatePerSecond: 0.1
+
+    quiz:
+      api_quiz_game_test:
+        IP:
+          capacity: 5
+          refillRatePerSecond: 0.1
+
+eureka:
+  instance:
+    prefer-ip-address: true

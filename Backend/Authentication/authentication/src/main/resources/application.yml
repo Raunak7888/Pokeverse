@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: AUTH-SERVICE
+  profiles:
+    active: dev
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+eureka:
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:"
+    web:
+      exposure:
+        include: health,info
