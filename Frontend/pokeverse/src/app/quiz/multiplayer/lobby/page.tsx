@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState,useRef  } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   parseUserCookie,
@@ -10,23 +10,28 @@ import {
 import { useLobbyWebSocket } from "@/components/lobby/useLobbyWebSocket";
 import PlayerList from "@/components/lobby/PlayerList";
 import ChatComponent from "@/components/chatcomponent";
-import { MessagesSquare } from "lucide-react";
+import { MessagesSquare, Copy, Loader2, Play } from "lucide-react";
 import { Player, Room } from "@/utils/types";
-import { Client } from "@stomp/stompjs"; // Import Client type for ChatComponent prop
+import { Client } from "@stomp/stompjs";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Lobby = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const failedProfilePics = useRef<Set<string>>(new Set());
-
   const [room, setRoom] = useState<Room | null>(null);
   const [userId, setUserId] = useState("");
   const [username, setUsername] = useState("");
   const [roomId, setRoomId] = useState("000000");
   const [showChat, setShowChat] = useState(false);
-  const router = useRouter();
+  const [starting, setStarting] = useState(false);
 
+  const router = useRouter();
   const { stompClient, isConnected } = useLobbyWebSocket(setPlayers, roomId);
 
+  // Init room and players
   useEffect(() => {
     const user = parseUserCookie();
     if (user) {
@@ -44,9 +49,7 @@ const Lobby = () => {
   }, []);
 
   useEffect(() => {
-    if (!userId) {
-      return;
-    }
+    if (!userId) return;
 
     const init = async () => {
       const id = localStorage.getItem("roomId");
@@ -54,10 +57,18 @@ const Lobby = () => {
         try {
           const data = await fetchRoomFromServer(id, userId);
           setRoom(data.room);
-          setPlayers(data.players);
+          setPlayers(
+            data.players.map((p: any, idx: number) => ({
+              id: p.id ?? idx,
+              userId: p.userId,
+              name: p.name,
+              profilePicUrl: p.profilePicUrl,
+              score: p.score,
+            }))
+          );
           setRoomId(data.room.id.toString().padStart(6, "0"));
-        } catch (e) {
-          // console.error("Failed to fetch room:", e); // Keep error logging if critical
+        } catch {
+          toast.error("Failed to fetch room from server.");
         }
       }
 
@@ -70,8 +81,13 @@ const Lobby = () => {
 
         if (playersNeedingPics.length > 0) {
           try {
-            const enriched = await enrichPlayers(playersNeedingPics, failedProfilePics.current);
-            const merged = players.map((p) => enriched.find((e) => e.userId === p.userId) || p);
+            const enriched = await enrichPlayers(
+              playersNeedingPics,
+              failedProfilePics.current
+            );
+            const merged = players.map(
+              (p) => enriched.find((e) => e.userId === p.userId) || p
+            );
             setPlayers(merged);
             localStorage.setItem("players", JSON.stringify(merged));
           } catch (e) {
@@ -79,21 +95,24 @@ const Lobby = () => {
           }
         }
       }
-
     };
 
     init();
   }, [userId, room, players]);
 
+  const handleCopyRoomCode = () => {
+    navigator.clipboard.writeText(roomId);
+    toast.success("Room code copied!");
+  };
+
   const handleStartGame = () => {
-    if (!room) {
+    if (!room || !stompClient || !isConnected) {
+      toast.error("Cannot start game. WebSocket not ready.");
       return;
     }
 
-    if (!stompClient || !isConnected) {
-      // console.warn("STOMP client not connected. Cannot start game."); // Keep warning if critical for user experience
-      return;
-    }
+    setStarting(true);
+    console.group("🎮 Game Start Flow");
 
     stompClient.publish({
       destination: `/app/start/${room.id}`,
@@ -105,38 +124,65 @@ const Lobby = () => {
         destination: `/app/game/${room.id}/${room.hostId}`,
         body: JSON.stringify({ action: "initiate" }),
       });
+      console.groupEnd();
+      setStarting(false);
     }, 300);
   };
 
   return (
     <div className="flex flex-col items-center justify-center h-full bg-black text-white font-[Piedra]">
-      <h1 className="text-4xl font-bold mb-6">{room?.name || "Loading Room..."}</h1>
-      <div className="mb-4 text-xl">Room Code: {roomId}</div>
-
-      <div className="flex gap-8">
-        <PlayerList players={players} room={room} userId={userId} onStartGame={handleStartGame} />
-
-        {/* Chat Component Toggle */}
-        <div className="relative">
-          <button
-            onClick={() => setShowChat((prev) => !prev)}
-            className={`absolute top-2 w-12 h-12 bg-[#1e1e1e] hover:bg-[#2a2a2a] p-3 rounded-full shadow-lg transition-all duration-300 ${showChat ? "left-104" : ""
-              }`}
-            style={{ boxShadow: "0 0 10px rgba(255,255,255,0.3)" }}
-          >
-            <MessagesSquare className="text-white w-6 h-6" />
-          </button>
-
-          {showChat && (
-            <div
-              className="animate-slide-in-right w-[400px]"
-              style={{ animationDuration: "0.4s" }}
+      <Card className="w-[90%] max-w-4xl rounded-2xl shadow-2xl border-none p-6">
+        <CardHeader className="flex flex-col items-center gap-2">
+          <CardTitle className="text-3xl font-bold">
+            {room?.name || "Loading Room..."}
+          </CardTitle>
+          <div className="flex items-center gap-2 text-lg">
+            Room Code:{" "}
+            <span className="font-mono text-yellow-400">{roomId}</span>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={handleCopyRoomCode}
+              className="h-8 w-8"
             >
-              <ChatComponent stompClient={stompClient as Client | null} />
-            </div>
-          )}
-        </div>
-      </div>
+              <Copy className="w-4 h-4 text-gray-300" />
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="flex gap-8 justify-center">
+          <PlayerList
+            players={players}
+            room={room}
+            userId={userId}
+            onStartGame={handleStartGame}
+          />
+
+          {/* Chat Toggle & Panel */}
+          <div className="relative">
+            <Button
+              onClick={() => setShowChat((prev) => !prev)}
+              className="absolute top-2 left-[-60px] w-12 h-12 rounded-full bg-[#2a2a2a] hover:bg-[#3a3a3a] shadow-md"
+            >
+              <MessagesSquare className="w-6 h-6" />
+            </Button>
+
+            <AnimatePresence>
+              {showChat && (
+                <motion.div
+                  initial={{ x: 400, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: 400, opacity: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="w-[350px] bg-[#111] rounded-xl shadow-lg p-2"
+                >
+                  <ChatComponent stompClient={stompClient as Client | null} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

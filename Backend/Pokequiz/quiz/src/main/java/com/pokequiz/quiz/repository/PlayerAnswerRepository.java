@@ -35,6 +35,8 @@ public interface PlayerAnswerRepository extends JpaRepository<PlayerAnswer, Long
     """, nativeQuery = true)
     List<Tuple> findByPlayerIdAndRoomId(@Param("playerId") Long playerId, @Param("roomId") Long roomId);
     List<PlayerAnswer> findByPlayer(Player player);
+    boolean existsByPlayerAndRoomQuiz(Player player, RoomQuiz roomQuiz);
+
 
 
 

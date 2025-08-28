@@ -11,7 +11,6 @@ export const useSendAnswerValidation = (stompClient: Client | null) => {
           destination: "/app/game/answer/validation",
           body: JSON.stringify(answerData),
         });
-        console.log("[WS] Sent answer for validation:", answerData);
       } else {
         console.warn("[WS] Cannot send answer — WebSocket not connected");
       }

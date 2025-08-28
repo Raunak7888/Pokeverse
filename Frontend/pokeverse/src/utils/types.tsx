@@ -1,5 +1,6 @@
 export type Player = {
-  userId: number;
+  id: number;
+  userId : number;
   name: string;
   profilePicUrl: string;
   score:number;
@@ -24,6 +25,7 @@ export interface WsAnswerValidationDTO {
   questionId: number;
   answer: string;
   correct: boolean;
+  score: number;
 }
 
 export interface DetailedAnswer {

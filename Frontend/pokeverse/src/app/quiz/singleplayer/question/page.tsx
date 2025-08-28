@@ -6,6 +6,7 @@ import QuestionComponent from "@/components/questionComponent";
 import Result from "@/components/result";
 import Pokeball from "@/components/pokeball";
 import { useRouter } from "next/navigation";
+import backendUrl from "@/components/backendUrl";
 
 type Stage = "intro" | "question" | "questionResult";
 
@@ -17,7 +18,7 @@ interface Question {
 
 interface Session {
   sessionId: number;
-  [key: string]: any; // include other props like difficulty, etc.
+  [key: string]: any;
 }
 
 const QuizPage = () => {
@@ -32,14 +33,14 @@ const QuizPage = () => {
 
   const router = useRouter();
 
+  // load questions + session
   useEffect(() => {
     const questionsStr = localStorage.getItem("quizQuestions");
     const sessionStr = localStorage.getItem("session");
 
     if (questionsStr) {
       try {
-        const parsedQuestions: Question[] = JSON.parse(questionsStr);
-        setQuestions(parsedQuestions);
+        setQuestions(JSON.parse(questionsStr));
       } catch (err) {
         console.error("Invalid questions JSON:", err);
       }
@@ -48,7 +49,6 @@ const QuizPage = () => {
     if (sessionStr) {
       try {
         const session: Session = JSON.parse(sessionStr);
-        console.log(session.sessionId);
         setSessionId(session.sessionId);
       } catch (err) {
         console.error("Invalid session JSON:", err);
@@ -56,6 +56,7 @@ const QuizPage = () => {
     }
   }, []);
 
+  // start time for each question
   useEffect(() => {
     if (questions.length > 0 && stage === "question") {
       setStartTime(new Date());
@@ -81,7 +82,7 @@ const QuizPage = () => {
     };
 
     try {
-      const res = await fetch("http://localhost:8083/api/attempts/submit", {
+      const res = await fetch(`${backendUrl}/quiz/api/attempts/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -100,6 +101,8 @@ const QuizPage = () => {
     }
   };
 
+
+
   const handleNextQuestion = async () => {
     const isLast = currentIndex + 1 >= questions.length;
 
@@ -107,7 +110,7 @@ const QuizPage = () => {
       try {
         if (sessionId !== null) {
           await fetch(
-            `http://localhost:8083/api/sessions/update/${sessionId}?status=COMPLETED`,
+            `${backendUrl}/quiz/api/sessions/update/${sessionId}?status=COMPLETED`,
             { method: "PUT" }
           );
         }
@@ -125,31 +128,34 @@ const QuizPage = () => {
     }
   };
 
-  const currentQuestion = useMemo(() => questions[currentIndex], [
-    currentIndex,
-    questions,
-  ]);
+  const currentQuestion = useMemo(
+    () => questions[currentIndex],
+    [currentIndex, questions]
+  );
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Intro Pokeball Animation */}
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-gradient-to-b from-black via-[#111] to-black text-white">
+      {/* Decorative glowing orbs */}
+      <div className="absolute -top-20 left-10 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-10 right-10 w-72 h-72 bg-yellow-500/20 rounded-full blur-3xl animate-pulse"></div>
+
       <AnimatePresence>
         {stage === "intro" && (
           <motion.div
             initial={{ scale: 0, y: 100, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1, rotate: 360 }}
-            transition={{ type: "spring", stiffness: 50, damping: 15, duration: 3 }}
+            transition={{ type: "spring", stiffness: 60, damping: 14, duration: 2.5 }}
             className="absolute"
           >
             <motion.div
               initial={{ scale: 1 }}
               animate={{ scale: 1, opacity: 0, rotate: -360 }}
-              transition={{ delay: 1, duration: 3, ease: "easeInOut" }}
+              transition={{ delay: 1, duration: 2, ease: "easeInOut" }}
               onAnimationComplete={handleStart}
             >
               <Pokeball
-                Text={`${currentIndex + 1}`}
-                size={300}
+                Text=""
+                size={280}
                 css="right-[5rem] bottom-[-4rem]"
               />
             </motion.div>
@@ -162,12 +168,13 @@ const QuizPage = () => {
         {stage === "question" && currentQuestion && (
           <motion.div
             key={currentIndex}
-            initial={{ y: -500, opacity: 0, scale: 1.2 }}
+            initial={{ y: 0, opacity: 0, scale: 1, visibility: "visible" }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, y: -50, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 300, damping: 10, duration: 0.8 }}
-            className="z-10"
+            exit={{ opacity: 0, y: 0, scale: 0, visibility: "hidden" }}
+            transition={{ type: "spring", stiffness: 200, damping: 18, duration: 0.2 }}
+            className="z-10 bg-[#1a1a1a]/30 px-10 h-150 rounded-2xl shadow-xl border border-yellow-400/20 backdrop-blur-xl"
           >
+
             <QuestionComponent
               questionNumber={currentIndex + 1}
               questionText={currentQuestion.question}
@@ -177,27 +184,31 @@ const QuizPage = () => {
                 C: currentQuestion.optionsList[2],
                 D: currentQuestion.optionsList[3],
               }}
+              selectedOption={selectedOption}   // 🔥 pass parent state
+              onSelect={setSelectedOption}      // 🔥 updates parent directly
               onSubmit={handleAnswerSubmit}
-              onSelect={setSelectedOption}
             />
+
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Question Result Stage */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {stage === "questionResult" && (
           <motion.div
             key="result"
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3, ease: [0.25, 0.8, 0.25, 1] }}
+            exit={{ opacity: 0, scale: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }} // ⏱ faster animation
+            className="z-20 fixed"
           >
             <Result isCorrect={isCurrentCorrect} onNext={handleNextQuestion} />
           </motion.div>
         )}
       </AnimatePresence>
+
     </div>
   );
 };

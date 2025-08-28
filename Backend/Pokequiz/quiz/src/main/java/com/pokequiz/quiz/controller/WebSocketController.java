@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class WebSocketController {
 
     private final SimpMessagingTemplate messagingTemplate;

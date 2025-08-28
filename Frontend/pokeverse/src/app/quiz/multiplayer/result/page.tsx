@@ -60,7 +60,7 @@ const Result = () => {
   }, [playerId, results]);
 
   const handleMenuButton = () => {
-    router.push("/");
+    router.push("/quiz");
   };
 
   return (
@@ -68,7 +68,7 @@ const Result = () => {
       {showLeaderboard ? (
         <Leaderboard />
       ) : (
-        <div className="bg-[#1e1e1e] text-white rounded-3xl p-8 w-[71vw] h-[66vh] shadow-2xl font-[Piedra] tracking-widest">
+        <div className="bg-[#1e1e1e] text-white rounded-3xl p-8   shadow-2xl font-[Piedra] tracking-widest">
           <div className="flex flex-col md:flex-row justify-between items-center mb-6">
             <h1 className="text-4xl font-bold tracking-wide font-[Piedra]">
               <span className="text-[#FF3B3B]">#</span>

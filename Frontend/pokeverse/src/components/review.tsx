@@ -3,6 +3,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { ReviewData } from "@/utils/types"; // Assuming this path is correct
+import backendUrl from "./backendUrl";
+import PokeButton from "./PokemonButton";
+import { useRouter } from "next/navigation";
 
 interface ReviewProps {
   playerId: number;
@@ -34,10 +37,14 @@ const CustomScrollbarStyles = () => (
 const Review: React.FC<ReviewProps> = ({ playerId, roomId }) => {
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
   const [loading, setLoading] = useState<boolean>(true);
-
+  const handleMenuButton = () => {
+    router.push("/");
+  };
   useEffect(() => {
     // Define the async function to fetch stats
+    
     const fetchStats = async () => {
       if (!playerId || !roomId) {
         setError("Player ID or Room ID is missing.");
@@ -50,7 +57,7 @@ const Review: React.FC<ReviewProps> = ({ playerId, roomId }) => {
         setError(null);
         // Make the API call to fetch the review data
         const response = await axios.get(
-          `http://localhost:8083/ws/stats/${roomId}/${playerId}`
+          `${backendUrl}/quiz/ws/stats/${roomId}/${playerId}`
         );
         // Set the fetched data into state
         setReviewData(response.data);
@@ -66,7 +73,7 @@ const Review: React.FC<ReviewProps> = ({ playerId, roomId }) => {
     fetchStats();
     // Dependency array ensures this effect runs again if playerId or roomId changes
   }, [playerId, roomId]);
-
+ 
   // Render a loading state while fetching data
   if (loading) {
     return <div className="text-center p-8 text-gray-300">Loading review...</div>;
@@ -173,8 +180,10 @@ const Review: React.FC<ReviewProps> = ({ playerId, roomId }) => {
             </p>
           )}
         </div>
+      
       </div>
     </div>
+    <PokeButton buttonName="Menu" onClick={handleMenuButton} buttonCss="absolute left-90 bottom-10" />
   </div>
 </>
 

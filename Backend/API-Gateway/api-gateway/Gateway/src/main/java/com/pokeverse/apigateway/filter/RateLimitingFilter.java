@@ -14,6 +14,8 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class RateLimitingFilter implements GlobalFilter {
+    private static final Logger log = LoggerFactory.getLogger(RateLimitingFilter.class);
+
     private final TokenBucketRateLimiterService rateLimiter;
     private final RateLimitFilterHelper helper;
 
@@ -40,7 +42,7 @@ public class RateLimitingFilter implements GlobalFilter {
             return chain.filter(exchange);
 
         } catch (Exception e) {
-            // Fallback: allow request rather than block everything on error
+            log.error("Error during rate limiting filter, allowing request to proceed.", e);
             return chain.filter(exchange);
         }
     }
@@ -64,12 +66,10 @@ public class RateLimitingFilter implements GlobalFilter {
         if (path.startsWith("/")) {
             path = path.substring(1);
         }
+
         return path.replace("/", "_");
     }
-
-    /**
-         * Simple container for Scope + Value pair.
-         */
-        private record ScopeResult(RateLimitScope scope, String value) {
+    
+    private record ScopeResult(RateLimitScope scope, String value) {
     }
 }

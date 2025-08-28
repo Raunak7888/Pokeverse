@@ -1,0 +1,134 @@
+
+services:
+  # ==============================
+  # Eureka Discovery Server
+  # ==============================
+  discovery-server:
+    image: raunak7888/discovery-server:latest
+    container_name: discovery-server
+    ports:
+      - "${DISCOVERY_PORT:-8761}:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - SERVER_PORT=${DISCOVERY_PORT:-8761}
+    networks:
+      - pokeverse-net
+
+  # ==============================
+  # API Gateway
+  # ==============================
+  api-gateway:
+    image: raunak7888/api-gateway:latest
+    container_name: api-gateway
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    depends_on:
+      - discovery-server
+      - redis
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - EUREKA_DEFAULT_ZONE=http://discovery-server:${DISCOVERY_PORT:-8761}/eureka/
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - GATEWAY_PORT=${GATEWAY_PORT:-8080}
+      - JWT_SECRET=${JWT_SECRET:-default_jwt_secret}
+      - ALLOWED_ORIGIN=${ALLOWED_ORIGIN:-*}
+    networks:
+      - pokeverse-net
+
+  # ==============================
+  # Auth Service
+  # ==============================
+  auth-service:
+    image: raunak7888/auth-service:latest
+    container_name: auth-service
+    ports:
+      - "${AUTH_PORT:-8081}:8081"
+    depends_on:
+      - discovery-server
+      - auth-db
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - EUREKA_DEFAULT_ZONE=http://discovery-server:${DISCOVERY_PORT:-8761}/eureka/
+      - AUTH_PORT=${AUTH_PORT:-8081}
+      - DB_URL=jdbc:postgresql://auth-db:5432/${AUTH_DB_NAME:-authdb}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASS=${DB_PASS:-postgres}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-your_google_client_id}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-your_google_client_secret}
+      - JWT_SECRET=${JWT_SECRET:-default_jwt_secret}
+      - ALLOWED_ORIGIN=${ALLOWED_ORIGIN:-*}
+      - JWT_TIME=${JWT_TIME:-86400000}
+      - REFRESH_TOKEN_TTL=${REFRESH_TOKEN_TTL:-2}
+    networks:
+      - pokeverse-net
+
+  # ==============================
+  # Quiz Service
+  # ==============================
+  quiz-service:
+    image: raunak7888/quiz-service:latest
+    container_name: quiz-service
+    ports:
+      - "${QUIZ_PORT:-8083}:8083"
+    depends_on:
+      - discovery-server
+      - quiz-db
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - QUIZ_PORT=${QUIZ_PORT:-8083}
+      - EUREKA_DEFAULT_ZONE=http://discovery-server:${DISCOVERY_PORT:-8761}/eureka/
+      - DB_URL=jdbc:postgresql://quiz-db:5432/${QUIZ_DB_NAME:-pokequizdb}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASS=${DB_PASS:-postgres}
+      - CORS_ALLOWED_ORIGIN=${CORS_ALLOWED_ORIGIN:-*}
+    networks:
+      - pokeverse-net
+
+  # ==============================
+  # Redis
+  # ==============================
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - pokeverse-net
+
+  # ==============================
+  # Auth DB
+  # ==============================
+  auth-db:
+    image: postgres:16
+    container_name: auth-db
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME:-authdb}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+    ports:
+      - "${AUTH_DB_PORT:-5433}:5432"
+    networks:
+      - pokeverse-net
+
+  # ==============================
+  # Quiz DB
+  # ==============================
+  quiz-db:
+    image: postgres:16
+    container_name: quiz-db
+    environment:
+      POSTGRES_DB: ${QUIZ_DB_NAME:-pokequizdb}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+    ports:
+      - "${QUIZ_DB_PORT:-5434}:5432"
+    networks:
+      - pokeverse-net
+
+# ==============================
+# Networks
+# ==============================
+networks:
+  pokeverse-net:
+    driver: bridge

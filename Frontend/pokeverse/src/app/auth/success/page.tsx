@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie"; // Make sure you've installed it: npm install js-cookie
+import backendUrl from "@/components/backendUrl";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -9,23 +10,21 @@ export default function AuthCallback() {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await fetch("http://localhost:8082/auth/success", {
+        const res = await fetch(backendUrl+"/authentication/auth/success", {
           credentials: "include",
         });
 
         const data = await res.json();
-        console.log("Logged in user:", data);
-
         // Store everything in cookies
         Cookies.set("user", JSON.stringify(data.user), {
           expires: 7,
           sameSite: "Lax",
         });
-        Cookies.set("accessToken", data["access token"], {
+        Cookies.set("accessToken", data["access_token"], {
           expires: 1,
           sameSite: "Lax",
         });
-        Cookies.set("refreshToken", data["refresh token"], {
+        Cookies.set("refreshToken", data["refresh_token"], {
           expires: 7,
           sameSite: "Lax",
         });
@@ -40,5 +39,5 @@ export default function AuthCallback() {
     fetchUser();
   }, []);
 
-  return <div className="text-white">Logging in, please wait...</div>;
+  return <div className="text-white text-center w-screen h-screen">Logging in, please wait...</div>;
 }

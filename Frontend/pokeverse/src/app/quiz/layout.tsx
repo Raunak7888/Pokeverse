@@ -3,6 +3,7 @@
 
 import Navbar from "@/components/Navbar";
 import { ReactNode } from "react";
+import { Toaster } from "sonner";
 
 export default function QuizLayout({ children }: { children: ReactNode }) {
   return (
@@ -10,7 +11,9 @@ export default function QuizLayout({ children }: { children: ReactNode }) {
       <Navbar />
 
       <div className="w-full bg-[#0e0e0e] h-[91.3vh] rounded-lg overflow-hidden shadow-lg">
+        
         {children}
+        <Toaster richColors position="top-center" />
       </div>
     </div>
   );

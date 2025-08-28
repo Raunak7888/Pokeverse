@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import QuestionComponent from "@/components/questionComponent";
 import MutiplayerResult from "@/components/mutiplayerResult";
@@ -9,139 +9,153 @@ import Cookies from "js-cookie";
 import Leaderboard from "@/components/leaderboard";
 import { ClockProvider } from "@/components/GameClockContext";
 import { useMultiplayerQuestionStore } from "@/store/multiplayerQuestionStore";
-import { WsAnswerValidationDTO } from "@/utils/types";
 import { useLobbyWebSocket } from "@/components/lobby/useLobbyWebSocket";
-import { Player } from "@/utils/types";
 import { useSendAnswerValidation } from "@/lib/hooks/useSendAnswerValidation";
 import { useMultiplayerResultStore } from "@/store/mulitplayerResultStore";
+import { useLeaderboardStore } from "@/store/useLeaderboardStore";
+import { Player, WsAnswerValidationDTO } from "@/utils/types";
+
+const QUESTION_DURATION = 30; // ⏳ Configurable per game
 
 const Question = () => {
   const { multiplayerQuestion } = useMultiplayerQuestionStore();
+  const { applyAnswerResult, setPlayers, setRoom } = useLeaderboardStore();
+
   const [stage, setStage] = useState<"intro" | "question" | "result">("intro");
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [startClock, setStartClock] = useState(false);
   const [questionKey, setQuestionKey] = useState(0);
   const [answerResult, setAnswerResult] = useState<WsAnswerValidationDTO | null>(null);
-  const [playerId, setPlayerId] = useState<number>();
-  const [roomId, setRoomId] = useState<number>();
-  const [players, setPlayers] = useState<Player[]>([]);
-  const duration = 30;
+  const [playerId, setPlayerId] = useState<number | null>(null);
+  const [roomId, setRoomId] = useState<number | null>(null);
+  const [players, setPlayersLocal] = useState<Player[]>([]);
 
-  const { stompClient } = useLobbyWebSocket(setPlayers, String(roomId));
+  const { stompClient } = useLobbyWebSocket(setPlayersLocal, roomId ? String(roomId) : "");
   const sendAnswer = useSendAnswerValidation(stompClient);
 
+  /** 🔹 Reset state whenever a new question arrives */
   useEffect(() => {
     if (multiplayerQuestion) {
       setStage("intro");
       setSelectedOption(null);
       setStartClock(false);
       setQuestionKey((prev) => prev + 1);
+
     }
   }, [multiplayerQuestion]);
 
-  const handleStart = () => {
+  /** 🔹 Handle intro → question transition */
+  const handleStart = useCallback(() => {
     setTimeout(() => {
       setStage("question");
       setStartClock(true);
     }, 100);
-  };
+  }, []);
 
+  /** 🔹 Initialize player + room info from cookies/localStorage */
   useEffect(() => {
     try {
       const user = Cookies.get("user");
-      const roomId = localStorage.getItem("roomId");
+      const storedRoomId = localStorage.getItem("roomId");
       const rawPlayers = localStorage.getItem("players");
+      const storedRoom = localStorage.getItem("room");
 
       if (user) {
         const { id: userId } = JSON.parse(user);
-
         if (rawPlayers) {
           const players = JSON.parse(rawPlayers);
-          const matchedPlayer = players.find((p: any) => p.userId === userId);
-          if (matchedPlayer?.userId) setPlayerId(matchedPlayer.id);
-        }
-      }
-
-      if (roomId) setRoomId(Number(roomId));
-    } catch (err) {
-      console.error("Error initializing player or room:", err);
-    }
-  }, []);
-
-  useEffect(() => {
-    const updateAnswerResult = () => {
-      try {
-        console.log("🔁 Running updateAnswerResult...");
-
-        if (!playerId) {
-          console.warn("⚠️ playerId is not set");
-          return;
-        }
-
-        if (!multiplayerQuestion) {
-          console.warn("⚠️ multiplayerQuestion is not available");
-          return;
-        }
-
-        const results = useMultiplayerResultStore.getState().results;
-
-        console.log("📦 Zustand multiplayerResults:", results);
-        console.log("👤 Looking for result with playerId:", playerId);
-        console.log("❓ Current questionId:", multiplayerQuestion.question.id);
-
-        const latestResult = [...results]
-          .reverse()
-          .find(
-            (r) =>
-              r.userId === playerId &&
-              r.questionId === multiplayerQuestion.question.id
-          );
-
-        if (latestResult) {
-          console.log("✅ Found matching result:", latestResult);
-          setAnswerResult(latestResult);
+          const matchedPlayer = players.find((p: Player) => p.userId === userId);
+          if (matchedPlayer?.id) {
+            setPlayerId(matchedPlayer.id);
+          } else {
+            console.warn("⚠️ No matching player found for userId:", userId);
+          }
         } else {
-          console.warn("❌ No matching result found for current player and question");
+          console.warn("⚠️ No players found in localStorage");
         }
-      } catch (err) {
-        console.error("🔥 Error in updateAnswerResult:", err);
+      } else {
+        console.warn("⚠️ No user cookie found");
       }
-    };
-
-    updateAnswerResult();
-  }, [
-    playerId,
-    multiplayerQuestion,
-    useMultiplayerResultStore((state) => state.results), // 👈 this triggers re-run on store change
-  ]);
 
 
+      if (storedRoomId) setRoomId(Number(storedRoomId));
+
+      if (rawPlayers) {
+        setPlayers(JSON.parse(rawPlayers));
+      }
+      if (storedRoom) {
+        setRoom(JSON.parse(storedRoom));
+      }
+    } catch (err) {
+      console.error("⚠️ Error initializing player/room:", err);
+    }
+  }, [setPlayers, setRoom]); // Added setPlayers and setRoom to dependencies
+
+  /** 🔹 Sync ALL answer results from multiplayer store */
+  /** 🔹 Sync ALL answer results from multiplayer store */
+  useEffect(() => {
+    if (!multiplayerQuestion) return;
+
+    const unsubscribe = useMultiplayerResultStore.subscribe((state) => {
+      const relevantResults = state.results.filter(
+        (r) => r.questionId === multiplayerQuestion.question.id
+      );
+
+      relevantResults.forEach((res) => {
+        applyAnswerResult(String(res.userId), res.score);
+        if (res.userId === playerId) {
+          setAnswerResult({
+            userId: res.userId,
+            questionId: res.questionId,
+            correct: res.correct,
+            roomId: roomId ?? 0,
+            answer: res.answer ?? "",
+            score: res.score ?? 0,
+          });
+        }
+      });
+    });
+
+    return () => unsubscribe();
+  }, [multiplayerQuestion, applyAnswerResult, playerId, roomId]);
 
 
+
+  /** 🔹 Option select */
   const handleSelect = (option: string) => {
     setSelectedOption(option);
   };
 
+  /** 🔹 Answer submit */
   const handleSubmit = () => {
-    if (!selectedOption || !multiplayerQuestion || !playerId || !roomId) return;
+    if (!selectedOption || !multiplayerQuestion || !playerId || !roomId) {
+      console.warn("❌ Missing data, cannot submit", {
+        selectedOption,
+        multiplayerQuestion,
+        playerId,
+        roomId,
+      });
+      return;
+    }
 
     const payload = {
       roomId,
-      userId: playerId,
+      userId: playerId, // ✅ send correct player id
       questionId: multiplayerQuestion.question.id,
       answer: selectedOption,
+      score: 0, // Provide a default score, update as needed
     };
-
-    console.log(payload);
 
     sendAnswer(payload);
     setStage("result");
   };
 
+
   return (
-    <ClockProvider duration={duration} start={startClock}>
+    <ClockProvider duration={QUESTION_DURATION} start={startClock}>
       <div className="min-h-screen bg-black flex items-center justify-between px-4 relative overflow-hidden gap-[1vw]">
         <div className="flex-1 flex justify-center rounded-[40px] items-center relative bottom-8">
+          {/* 🔹 Intro Stage */}
           <AnimatePresence>
             {stage === "intro" && (
               <motion.div
@@ -153,12 +167,12 @@ const Question = () => {
               >
                 <motion.div
                   initial={{ scale: 1 }}
-                  animate={{ scale: 1, x: 0, y: 0, opacity: 0, rotate: -360 }}
+                  animate={{ scale: 1, opacity: 0, rotate: -360 }}
                   transition={{ delay: 1, duration: 3, ease: "easeInOut" }}
                   onAnimationComplete={handleStart}
                 >
                   <Pokeball
-                    Text={`${multiplayerQuestion?.questionNumber || "?"}`}
+                    Text={`${multiplayerQuestion?.questionNumber ?? "?"}`}
                     size={300}
                     css="left-[9rem] bottom-[-4rem]"
                   />
@@ -167,6 +181,7 @@ const Question = () => {
             )}
           </AnimatePresence>
 
+          {/* 🔹 Question Stage */}
           <AnimatePresence>
             {stage === "question" && multiplayerQuestion && (
               <motion.div
@@ -186,38 +201,41 @@ const Question = () => {
                     C: multiplayerQuestion.question.options[2],
                     D: multiplayerQuestion.question.options[3],
                   }}
+                  selectedOption={selectedOption}
                   onSelect={handleSelect}
                   onSubmit={handleSubmit}
-                  selectedOption={selectedOption}
-                  duration={duration}
-                  isClock={true}
                   isTimebound={true}
-                  startClock={startClock}
+                  startTime={Date.now()}
+                  endTime={multiplayerQuestion.questionEndTime}
                 />
               </motion.div>
             )}
           </AnimatePresence>
 
+          {/* 🔹 Result Stage */}
           <AnimatePresence>
-            {stage === "result" && (
+            {stage === "result" && multiplayerQuestion && (
               <motion.div
                 key={`result-${questionKey}`}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
               >
-                <MutiplayerResult duration={duration} correct={answerResult?.correct} />
-              </motion.div>
+                <MutiplayerResult
+                  endTime={multiplayerQuestion.questionEndTime} // ⬅️ pass endTime instead of duration
+                  correct={answerResult?.correct}
+                />              </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        <Leaderboard />
+        {/* Leaderboard */}
+        <div>
+          <Leaderboard />
+        </div>
       </div>
     </ClockProvider>
   );
 };
 
 export default Question;
-
-

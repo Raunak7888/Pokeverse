@@ -4,9 +4,14 @@ import React, { useEffect, useState } from 'react';
 import { Timer } from 'lucide-react';
 import Star from './star'; // Assuming Star component exists and works as expected
 import { QuizAnalysis } from '@/utils/types';
+import PokeButton from './PokemonButton';
+import { useRouter } from 'next/navigation';
+import PikachuLoader from './pikachuLoader';
 
 const Analysis = () => {
     const [quizAnalysis, setQuizAnalysis] = useState<QuizAnalysis>();
+    const [loader, setLoader] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         try {
@@ -43,17 +48,26 @@ const Analysis = () => {
         );
     }
 
+    function handleMenuClick(event: React.MouseEvent<HTMLButtonElement>): void {
+        setLoader(true);
+        router.push('/quiz');
+    }
+
     // If quizAnalysis is not null, proceed with rendering the analysis
     return (
-        <div className="flex justify-center items-center h-full w-full text-white bg-[#181818]"> {/* Subtly darker background */}
+        <div className="flex flex-col justify-center items-center h-full w-full text-white bg-[#181818]"> 
+        {loader && <PikachuLoader />}
+            <div className='text-4xl font-bold my-5 font-[Krona_One] text-[#ff4035]'>
+              Quiz Analysis
+            </div>
             <div className="bg-[#282828] h-[90%] w-[90%] rounded-4xl p-7 grid grid-cols-[2fr_8fr] grid-rows-[2fr_4fr] gap-4
                          transform transition-all duration-300 ease-in-out hover:scale-[1.005] hover:shadow-xl hover:shadow-[#282828]/30 cursor-default">
 
                 {/* Accuracy/Star Rating Card */}
                 <div className="flex bg-[#383838] rounded-3xl flex-col items-center
                             transform transition-all duration-300 ease-in-out
-                            hover:scale-105 hover:shadow-lg hover:shadow-[#2CC30A]/50 cursor-pointer">
-                    <div className="relative rotate-180 w-52 h-32 overflow-hidden">
+                            hover:scale-105 hover:shadow-lg hover:shadow-[#2CC30A]/50 ">
+                    <div className="relative rotate-180 w-52 h-32 mt-9 overflow-hidden">
                         <div
                             className="w-52 h-52 rounded-full absolute bottom-5 left-0 flex items-center justify-center
                                        transition-transform duration-1000 ease-in-out"
@@ -75,11 +89,11 @@ const Analysis = () => {
                                 className="font-bold text-xl rotate-180 font-[Aclonica]"
                                 style={{ color: accuracyColor }}
                             >
-                                {quizAnalysis.accuracy}%
+                                {quizAnalysis.accuracy.toPrecision(4)}%
                             </div>
                         </div>
                     </div>
-                    <div className="bg-[#484848] w-full max-w-xs rounded-b-2xl px-6 py-3 flex justify-center space-x-2
+                    <div className="bg-[#484848] w-83 h-16 rounded-b-2xl px-6 py-3 flex justify-center space-x-2
                                      transform transition-all duration-300 ease-in-out hover:bg-[#585858]">
                         {Array.from({ length: 5 }).map((_, i) => (
                             <Star key={i} fill={i * 20 < quizAnalysis.accuracy} height={40} width={40} />
@@ -91,26 +105,26 @@ const Analysis = () => {
                 <div className="bg-[#383838] rounded-3xl p-5 grid grid-rows-2 gap-3">
                     <div className='bg-[#484848] rounded-t-2xl p-2 grid grid-cols-4 gap-3'>
                         {/* Total Questions Card */}
-                        <div className='bg-[#585858] rounded-tl-2xl pt-1 pl-3 pr-3 border-b-2 border-lime-500
-                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] cursor-pointer'>
-                            <div className='font-bold text-xl text-center font-[Aclonica] text-cyan-400'>{quizAnalysis.totalQuestions || 0}</div>
+                        <div className='bg-[#585858] rounded-tl-2xl pt-1 pl-3 pr-3 border-b-2 border-lime-500 flex items-center justify-center flex-col
+                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
+                            <div className='font-bold text-xl text-center font-[Aclonica] text-lime-500 '>{quizAnalysis.totalQuestions || 0}</div>
                             <div className='w-full text-xs font-[Krona_One] text-center tracking-widest text-gray-400'>Total Question</div>
                         </div>
                         {/* Correct Questions Card */}
-                        <div className='bg-[#585858] pt-1 pl-3 pr-3 border-b-2 border-green-500
-                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] cursor-pointer'>
+                        <div className='bg-[#585858] pt-1 pl-3 pr-3 border-b-2 border-green-500 flex items-center justify-center flex-col
+                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
                             <div className='font-bold text-xl text-center font-[Aclonica] text-green-400'>{quizAnalysis.correctAnswers || 0}</div>
                             <div className='w-full text-xs font-[Krona_One] text-center tracking-widest text-gray-400'>Correct Question</div>
                         </div>
                         {/* Wrong Questions Card */}
-                        <div className='bg-[#585858] pt-1 pl-3 pr-3 border-b-2 border-red-500
-                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] cursor-pointer'>
+                        <div className='bg-[#585858] pt-1 pl-3 pr-3 border-b-2 border-red-500 flex items-center justify-center flex-col
+                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
                             <div className='font-bold text-xl text-center font-[Aclonica] text-red-400'>{quizAnalysis.wrongAnswers || 0}</div>
                             <div className='w-full text-xs font-[Krona_One] text-center tracking-widest text-gray-400'>Wrong Question</div>
                         </div>
                         {/* Unanswered Questions Card */}
-                        <div className='bg-[#585858] rounded-tr-2xl pt-1 pl-3 pr-3 border-b-2 border-orange-500
-                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] cursor-pointer'>
+                        <div className='bg-[#585858] rounded-tr-2xl pt-1 pl-3 pr-3 border-b-2 border-orange-500 flex items-center justify-center flex-col
+                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
                             <div className='font-bold text-xl text-center font-[Aclonica] text-orange-400'>
                                 {Math.max(0, (quizAnalysis.totalQuestions || 0) - ((quizAnalysis.correctAnswers || 0) + (quizAnalysis.wrongAnswers || 0)))}
                             </div>
@@ -120,22 +134,22 @@ const Analysis = () => {
                     <div className='grid grid-cols-[2fr_1fr] gap-3'>
                         <div className='bg-[#484848] rounded-bl-2xl p-2 w-full h-full grid grid-cols-2 gap-3'>
                             {/* Speed Rating Card */}
-                            <div className='bg-[#585858] rounded-bl-2xl pt-1 pl-3 pr-3 border-b-2 border-blue-500
-                                           transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] cursor-pointer'>
+                            <div className='bg-[#585858] rounded-bl-2xl pt-1 pl-3 pr-3 border-b-2 border-blue-500 flex items-center justify-center flex-col
+                                           transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
                                 <div className='font-bold text-xl text-center font-[Aclonica] text-blue-400'>{quizAnalysis.answerSpeedRating || 'N/A'}</div>
                                 <div className='w-full text-xs font-[Krona_One] text-center tracking-widest text-gray-400'>Speed Rating</div>
                             </div>
                             {/* Performance Rating Card */}
-                            <div className='bg-[#585858] pt-1 pl-3 pr-3 border-b-2 border-purple-500
-                                           transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] cursor-pointer'>
+                            <div className='bg-[#585858] pt-1 pl-3 pr-3 border-b-2 border-purple-500 flex items-center justify-center flex-col
+                                           transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
                                 <div className='font-bold text-xl text-center font-[Aclonica] text-purple-400'>{quizAnalysis.performanceRating || 'N/A'}</div>
                                 <div className='w-full text-xs font-[Krona_One] text-center tracking-widest text-gray-400'>Performance Rating</div>
                             </div>
                         </div>
                         <div className='bg-[#484848] rounded-br-2xl p-2 w-full h-full'>
                             {/* Quiz Played Date Card */}
-                            <div className='bg-[#585858] rounded-br-2xl w-full h-full pt-1 pl-3 pr-3 pb-1 border-b-2 border-yellow-600
-                                           transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] cursor-pointer'>
+                            <div className='bg-[#585858] rounded-br-2xl w-full h-full pt-1 pl-3 pr-3 pb-1 border-b-2 border-yellow-600 flex items-center justify-center flex-col
+                                           transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
                                 <div className='font-bold text-xl text-center font-[Aclonica] text-yellow-400'>
                                     {quizAnalysis.createdAt ? new Date(quizAnalysis.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
                                 </div>
@@ -149,28 +163,28 @@ const Analysis = () => {
 
                 {/* Duration Statistics Panel */}
                 <div className="bg-[#383838] rounded-3xl p-2">
-                    <div className='bg-[#484848] rounded-3xl p-2 grid grid-rows-4 gap-2'>
+                    <div className='bg-[#484848] h-full rounded-3xl p-2 grid grid-rows-4 gap-2'>
                         {/* Total Duration Card */}
-                        <div className='bg-[#585858] pt-3 pl-3 pr-3 rounded-t-2xl border-b-2 border-teal-500
-                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] cursor-pointer'>
+                        <div className='bg-[#585858] pt-3 pl-3 pr-3 rounded-t-2xl border-b-2 border-teal-500 flex  justify-center flex-col
+                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
                             <div className='font-bold text-xl font-[Aclonica] text-teal-400'>{formatTime(quizAnalysis.totalDuration || 0)}</div>
                             <div className='w-full text-xs font-[Krona_One] tracking-widest text-end text-gray-400'>Total Duration</div>
                         </div>
                         {/* Average Time Per Question Card */}
-                        <div className='bg-[#585858] pt-3 pl-3 pr-3 border-b-2 border-amber-500
-                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] cursor-pointer'>
+                        <div className='bg-[#585858] pt-3 pl-3 pr-3 border-b-2 border-amber-500 flex  justify-center flex-col
+                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
                             <div className='font-bold text-xl font-[Aclonica] text-amber-400'>{formatTime(quizAnalysis.averageTimePerQuestion || 0)}</div>
                             <div className='w-full text-xs font-[Krona_One] tracking-widest text-end text-gray-400'>Average Time Per Question</div>
                         </div>
                         {/* Fastest Time Card */}
-                        <div className='bg-[#585858] pt-3 pl-3 pr-3 border-b-2 border-lime-600
-                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] cursor-pointer'>
+                        <div className='bg-[#585858] pt-3 pl-3 pr-3 border-b-2 border-lime-600 flex  justify-center flex-col
+                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
                             <div className='font-bold text-xl font-[Aclonica] text-lime-400'>{formatTime(quizAnalysis.fastestAnswerTime || 0)}</div>
                             <div className='w-full text-xs font-[Krona_One] tracking-widest text-end text-gray-400'>Fastest Time</div>
                         </div>
                         {/* Slowest Time Card */}
-                        <div className='bg-[#585858] pt-3 pl-3 pr-3 rounded-b-2xl border-b-2 border-red-600
-                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] cursor-pointer'>
+                        <div className='bg-[#585858] pt-3 pl-3 pr-3 rounded-b-2xl border-b-2 border-red-600 flex  justify-center flex-col 
+                                       transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
                             <div className='font-bold text-xl font-[Aclonica] text-red-400'>{formatTime(quizAnalysis.slowestAnswerTime || 0)}</div>
                             <div className='w-full text-xs font-[Krona_One] tracking-widest text-end text-gray-400'>Slowest Time</div>
                         </div>
@@ -178,13 +192,13 @@ const Analysis = () => {
                 </div>
 
                 {/* Question Analysis Scrollable Panel */}
-                <div className="bg-[#383838] rounded-3xl p-4 h-86 grid grid-rows-[1fr_6fr]">
+                <div className="bg-[#383838] rounded-3xl p-4 h-113 grid grid-rows-[1fr_6fr]">
                     <div className='font-bold text-xl text-center pb-3 font-[Krona_One] text-cyan-400'>Question Analysis</div>
-                    <div className='bg-[#282828] h-full w-full p-3 rounded-b-2xl overflow-y-scroll custom-scrollbar'>
+                    <div className='bg-[#282828] h-full w-full p-3 rounded-2xl overflow-y-scroll custom-scrollbar'>
                         {quizAnalysis.questionAnalysis && quizAnalysis.questionAnalysis.length > 0 ? (
                             quizAnalysis.questionAnalysis.map((q, index) => (
                                 <div key={q.questionId} className={`bg-[#484848] rounded-3xl mb-3 p-3 w-full
-                                         transform transition-all duration-300 ease-in-out hover:scale-[1.01] cursor-pointer
+                                         transform transition-all duration-300 ease-in-out hover:scale-[1.01] 
                                          ${q.correct ? 'hover:shadow-lg hover:shadow-[#2CC30A]/50' : 'hover:shadow-lg hover:shadow-[#ee4035]/50'}`}>
                                     <div className='pb-3'>
                                         <span className='font-bold text-lg font-[Outfit] text-yellow-300'>Ques {index + 1}. </span><span className='font-bold text-lg font-[Outfit] text-white'>{q.question}</span>
@@ -200,7 +214,7 @@ const Analysis = () => {
                                                                 `}>{q.selectedAnswer || 'N/A'}</span>
                                             </span>
                                             {q.selectedAnswer !== q.correctAnswer && (
-                                                <span className='bg-[#585858] ml-2 rounded-2xl p-1 pl-3 pr-2 inline-block transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] cursor-pointer'>
+                                                <span className='bg-[#585858] ml-2 rounded-2xl p-1 pl-3 pr-2 inline-block transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
                                                     Correct Answer: <span className="text-green-300">{q.correctAnswer || 'N/A'}</span>
                                                 </span>
                                             )}
@@ -222,6 +236,10 @@ const Analysis = () => {
                     </div>
                 </div>
             </div>
+            <PokeButton buttonName='Menu' width={200} fontSize={20} textFont='Outfit' 
+            textColor='white' textShadowColor='#000' topColor='#EE4035' middleColor='#1e1e1e'
+             bottomColor='white' borderColor='black' buttonCss='fixed bottom-20 left-190 cursor-pointer'
+              onClick={handleMenuClick} />
         </div>
     );
 };

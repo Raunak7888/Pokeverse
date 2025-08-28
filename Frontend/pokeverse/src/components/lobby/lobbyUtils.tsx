@@ -1,5 +1,6 @@
 import { Player } from "@/utils/types";
 import Cookies from "js-cookie";
+import backendUrl from "../backendUrl";
 
 export const parseLocalStorage = (key: string) => {
   try {
@@ -43,7 +44,7 @@ export const enrichPlayers = async (
       if (player.profilePicUrl?.trim()) return player;
 
       try {
-        const res = await fetch(`http://localhost:8082/auth/user/profile/pic/${player.userId}`);
+        const res = await fetch(backendUrl+`/authentication/auth/user/profile/pic/${player.userId}`);
         if (!res.ok) throw new Error("Failed fetch");
 
         const data = await res.json();
@@ -60,7 +61,7 @@ export const enrichPlayers = async (
 
 
 export const fetchRoomFromServer = async (id: string | number, userId: string) => {
-  const res = await fetch(`http://localhost:8083/api/rooms/${id}/${userId}`);
+  const res = await fetch(`${backendUrl}/quiz/api/rooms/${id}/${userId}`);
   if (!res.ok) throw new Error("Room fetch failed");
   const data = await res.json();
   return {

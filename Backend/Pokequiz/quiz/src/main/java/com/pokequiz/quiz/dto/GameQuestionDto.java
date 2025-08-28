@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
@@ -17,4 +18,5 @@ public class GameQuestionDto {
     Question question; // Assuming Question model has its own Swagger annotations if desired
     @Schema(description = "The current question number in the game.", example = "5")
     AtomicInteger questionNumber;
+    Long questionEndTime;
 }

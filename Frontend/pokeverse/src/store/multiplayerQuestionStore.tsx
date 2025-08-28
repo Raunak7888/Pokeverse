@@ -22,6 +22,7 @@ interface MultiplayerQuestion {
     createdAt: string;
   };
   questionNumber: number;
+  questionEndTime: number;
 }
 
 interface MultiplayerQuestionState {
@@ -67,11 +68,11 @@ export const useMultiplayerQuestionStore = create<MultiplayerQuestionState>()(
                 options: optionsArray,
               },
               questionNumber: rawQuestionData.questionNumber,
+              questionEndTime: rawQuestionData.questionEndTime,
             };
 
             // Save to localStorage
             localStorage.setItem('multiplayerQuestion', JSON.stringify(parsedQuestion));
-
             // Force Zustand state update with new reference
             set({ multiplayerQuestion: { ...parsedQuestion } });
           } catch (e) {

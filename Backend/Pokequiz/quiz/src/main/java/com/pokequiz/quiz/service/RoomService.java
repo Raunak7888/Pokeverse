@@ -19,22 +19,28 @@ public class RoomService {
     private final SimpMessagingTemplate messagingTemplate;
     private final RoomRepository roomRepository;
     private final PlayerRepository playerRepository;
+    private final PlayerAnswerRepository playerAnswerRepository;
 
-    public ResponseEntity<?> createRoom(RoomDto roomDto) {
-        if (roomDto.getMaxPlayers() < 2 || roomDto.getMaxPlayers() > 4) {
-            return ResponseEntity.badRequest().body("Max players must be between 2 and 4");
+    public ResponseEntity<?> createRoom(CreateRoomRequest request) {
+        if (request.getHostId() <= 0 || request.getName() == null || request.getName().isEmpty()
+                || request.getMaxPlayers() < 2 || request.getMaxPlayers() > 4
+                || request.getMaxRound() <= 0) {
+            return ResponseEntity.badRequest().body("Invalid room data");
         }
-        if(roomRepository.findByNameAndHostId(roomDto.getName(), (long) roomDto.getHostId()).isPresent()) {
+
+        if (roomRepository.findByNameAndHostId(request.getName(), (long) request.getHostId()).isPresent()) {
             return ResponseEntity.badRequest().body("Room with the same name already exists");
         }
+
         Room room = new Room();
-        room.setName(roomDto.getName());
-        room.setHostId((long) roomDto.getHostId());
-        room.setMaxPlayers(roomDto.getMaxPlayers());
+        room.setName(request.getName());
+        room.setHostId((long) request.getHostId());
+        room.setMaxPlayers(request.getMaxPlayers());
+        room.setMaxRound(request.getMaxRound());
         room.setStarted(false);
         room.setEnded(false);
-        room.setMaxRound(roomDto.getMaxRound());
         room.setCurrentRound(0);
+
         return ResponseEntity.ok(roomRepository.save(room));
     }
 
@@ -96,6 +102,8 @@ public class RoomService {
             roomRepository.save(room);
             return "Room stopped";
     }
+
+
 }
 
 

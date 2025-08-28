@@ -5,6 +5,7 @@ import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { WsAnswerValidationDTO } from "@/utils/types";
 import { useMultiplayerResultStore } from "@/store/mulitplayerResultStore";
+import backendUrl from "../backendUrl";
 
 interface Props {
   answerData: Omit<WsAnswerValidationDTO, "correct">; // correct comes from server
@@ -23,7 +24,7 @@ const AnswerValidation = ({
   const addResult = useMultiplayerResultStore((state) => state.addResult);
 
   useEffect(() => {
-    const socket = new SockJS("http://localhost:8083/ws");
+    const socket = new SockJS(backendUrl+"/quiz/ws");
     const stompClient = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,
@@ -32,14 +33,11 @@ const AnswerValidation = ({
     });
 
     stompClient.onConnect = () => {
-      console.log("AnswerValidation WebSocket connected");
 
       // Subscribe to answer validation response topic
       stompClient.subscribe(`/topic/rooms/${answerData.roomId}/game`, (message) => {
         try {
-            console.log(message.body); 
           const result: WsAnswerValidationDTO = JSON.parse(message.body);
-          console.log("Answer validated:", result);
 
           onValidationResult(result);
           addResult(result); // ✅ Save to multiplayer result store

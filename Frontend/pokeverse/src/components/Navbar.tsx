@@ -4,10 +4,20 @@ import Link from "next/link";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { motion } from "framer-motion";
+import { LogOut } from "lucide-react";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const Navbar = () => {
   const [userData, setUserData] = useState<any>(null);
-  const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => {
     const rawData = Cookies.get("user");
@@ -21,77 +31,111 @@ const Navbar = () => {
     }
   }, []);
 
-  const handleImageClick = () => {
-    setShowDialog(!showDialog);
+  const handleLogout = () => {
+    Cookies.remove("user");
+    setUserData(null);
+    window.location.href = "/";
   };
 
-  const handleClose = () => {
-    setShowDialog(false);
-  };
-
-  const profilePictureUrl = "/person.png"; // fallback/default image
+  const profilePictureUrl = "/person.png";
 
   return (
-    <>
-      <div className="bg-[#EE4035] tracking-widest h-16 flex items-center justify-between px-4 shadow-md">
-        <div className="ml-4 text-white tracking-widest text-4xl md:text-3xl font-bold font-[Piedra]">
-          POKEVERSE
-        </div>
-        <div className="flex items-center space-x-4 mr-4">
-          <Link
-            href="/"
-            className="text-white md:text-xl font-bold font-[Piedra]"
-          >
-            Home
-          </Link>
-          <Link
-            href="/about"
-            className="text-white md:text-xl font-bold font-[Piedra]"
-          >
-            About
-          </Link>
-          <Image
-            src={userData?.profilePicUrl || profilePictureUrl}
-            alt="Profile"
-            width={40}
-            height={40}
-            className="m-0 p-0 border-[1px] border-white h-[40px] rounded-[50%] object-cover cursor-pointer"
-            onClick={handleImageClick}
-          />
-        </div>
+    <nav className="bg-[#EE4035] tracking-widest h-16 flex items-center justify-between px-4 shadow-md">
+      {/* Logo */}
+      <div className="ml-4 text-white tracking-widest text-3xl md:text-4xl font-bold font-[Piedra]">
+        POKEVERSE
       </div>
 
-      {/* Dialog Box */}
-      {showDialog && userData && (
-        <div className="flex rounded-b-2xl justify-end fixed end-0">
-          <div className="bg-[#1b1b1b] rounded-b-4xl shadow-lg p-6 relative h-[150px] w-[350px]">
-            <button
-              onClick={handleClose}
-              className="absolute top-2 right-3 text-gray-600 hover:text-red-500 text-xl font-bold"
-            >
-              &times;
-            </button>
-            <div className="flex flex-row items-center space-y-4">
-              <div className="bg-white rounded-[50%] h-[110px] w-[110px]">
-                <Image
-                  src={userData?.profilePicUrl || profilePictureUrl}
-                  alt="Profile"
-                  width={100}
-                  height={100}
-                  className="rounded-[50%] border-[2px] h-[110px] w-[110px] border-gray-300 object-contain"
-                />
-              </div>
-              <div className="flex flex-col items-center space-y-4">
-                <div className="text-lg text-white font-bold">
-                  {userData.name}
+      {/* Links + Profile */}
+      <div className="flex items-center space-x-6 mr-4">
+        <Link
+          href="/"
+          className="text-white md:text-lg font-bold font-[Piedra] hover:underline underline-offset-4"
+        >
+          Home
+        </Link>
+        <Link
+          href="/quiz"
+          className="text-white md:text-lg font-bold font-[Piedra] hover:underline underline-offset-4"
+        >
+          PokeQuiz
+        </Link>
+        <Link
+          href="/about"
+          className="text-white md:text-lg font-bold font-[Piedra] hover:underline underline-offset-4"
+        >
+          About
+        </Link>
+
+        {/* Profile / Login */}
+        {userData ? (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Image
+                src={userData.profilePicUrl || profilePictureUrl}
+                alt="Profile"
+                width={42}
+                height={42}
+                className="border-2 border-white rounded-full cursor-pointer object-cover"
+              />
+            </DialogTrigger>
+            <DialogContent className="bg-[#1b1b1b] text-white max-w-sm rounded-2xl p-6 border border-gray-700">
+              {/* Accessibility helpers */}
+              <DialogTitle>
+                <VisuallyHidden>User Profile</VisuallyHidden>
+              </DialogTitle>
+              <DialogDescription>
+                <VisuallyHidden>
+                  Shows the user’s account details and logout option.
+                </VisuallyHidden>
+              </DialogDescription>
+
+              {/* Animated Content */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="flex flex-col items-center space-y-4"
+              >
+                {/* Profile Pic */}
+                <div className="w-28 h-28 rounded-full border-4 border-[#EE4035] shadow-lg overflow-hidden">
+                  <Image
+                    src={userData.profilePicUrl || profilePictureUrl}
+                    alt="Profile"
+                    width={112}
+                    height={112}
+                    className="object-cover w-full h-full"
+                  />
                 </div>
-                <div className="text-sm text-white">{userData.email}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+
+                {/* Name + Email */}
+                <div className="text-center">
+                  <h2 className="text-xl font-bold">{userData.name}</h2>
+                  <p className="text-sm text-gray-400">{userData.email}</p>
+                </div>
+
+                {/* Logout */}
+                <Button
+                  variant="destructive"
+                  className="flex items-center gap-2 w-full hover:border-2 hover:scale-105 transition-all cursor-pointer"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={18} />
+                  Logout
+                </Button>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        ) : (
+          <Link
+            href="/auth"
+            className="text-white md:text-lg font-bold font-[Piedra] hover:underline underline-offset-4"
+          >
+            Log In
+          </Link>
+        )}
+      </div>
+    </nav>
   );
 };
 

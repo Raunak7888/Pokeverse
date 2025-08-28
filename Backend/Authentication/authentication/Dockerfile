@@ -1,33 +1,45 @@
-# Build Stage
-FROM maven:3.9.6-eclipse-temurin-21 AS build
+# =========================
+# Stage 1: Build the JAR
+# =========================
+FROM eclipse-temurin:21-jdk AS builder
+
 WORKDIR /app
 
-# Copy project files
-COPY . .
+# Copy Maven wrapper and build files first (for caching dependencies)
+COPY mvnw ./
+COPY .mvn .mvn
+COPY pom.xml ./
 
-# Build the project without running tests
-RUN mvn clean package -DskipTests
+# Download dependencies
+RUN ./mvnw dependency:go-offline -B
 
-# Run Stage
-FROM eclipse-temurin:21-jdk
+# Copy source code
+COPY src src
+
+# Build the application without tests
+RUN ./mvnw clean package -DskipTests
+
+# =========================
+# Stage 2: Create Runtime Image
+# =========================
+FROM eclipse-temurin:21-jre
+
 WORKDIR /app
 
-# Copy built JAR from the build stage
-COPY --from=build /app/target/*.jar app.jar
+# Security: Use non-root user
+RUN addgroup --system spring && adduser --system --ingroup spring spring
+USER spring:spring
 
-# Expose a default fallback port (for documentation)
-EXPOSE 8082
+# Expose service port (use ARG for flexibility)
+ARG APP_PORT=8082
+EXPOSE ${APP_PORT}
 
-# Run the Auth Service with prod profile and dynamic env variables
-ENTRYPOINT ["sh", "-c", "java \
-  -Dspring.profiles.active=prod \
-  -Dserver.port=${AUTH_PORT:-8082} \
-  -Dspring.datasource.url=${DB_URL} \
-  -Dspring.datasource.username=${DB_USER} \
-  -Dspring.datasource.password=${DB_PASS} \
-  -Dspring.security.oauth2.client.registration.google.client-id=${GOOGLE_CLIENT_ID} \
-  -Dspring.security.oauth2.client.registration.google.client-secret=${GOOGLE_CLIENT_SECRET} \
-  -Dsecret=${JWT_SECRET} \
-  -Dcors.allowed-origin=${ALLOWED_ORIGIN} \
-  -Deureka.client.service-url.defaultZone=${EUREKA_DEFAULT_ZONE} \
-  -jar app.jar"]
+# Copy JAR from builder stage (rename to app.jar)
+COPY --from=builder /app/target/*.jar app.jar
+
+# Environment variables (NO secrets here; pass secrets at runtime via `docker run -e`)
+ENV SPRING_PROFILES_ACTIVE=prod \
+    SERVER_PORT=${APP_PORT}
+
+# Run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]

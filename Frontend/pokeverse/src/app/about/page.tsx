@@ -1,11 +1,11 @@
 import React from 'react'
 
-const about = () => {
+const About = () => {
   return (
-    <div className="p-5 h-screen bg-[#1f1f1f] flex items-center justify-center">
-        i will be adding the about page here
+    <div className="flex flex-col items-center justify-center h-screen">
+      <div className='text-5xl font-[Modak]'>Coming soon!</div>
     </div>
   )
 }
 
-export default about
+export default About

@@ -1,22 +1,38 @@
-# Build Stage
-FROM maven:3.9.6-eclipse-temurin-21 AS build
+# =========================
+# Stage 1: Build the JAR
+# =========================
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 
-# Copy project files
-COPY . .
+# Copy Maven wrapper and POM first (better caching)
+COPY mvnw pom.xml ./
+COPY .mvn .mvn
 
-# Build the project without running tests
-RUN mvn clean package -DskipTests
+# Make Maven wrapper executable
+RUN chmod +x mvnw
 
-# Run Stage
+# Download dependencies (offline mode)
+RUN ./mvnw dependency:go-offline -B
+
+# Copy source code and build
+COPY src src
+RUN ./mvnw clean package -DskipTests -B
+
+# =========================
+# Stage 2: Runtime Image
+# =========================
 FROM eclipse-temurin:21-jdk
 WORKDIR /app
 
-# Copy built JAR from the build stage
+# Copy JAR from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose a default port for documentation (optional)
+# Non-root user for security
+RUN useradd -m appuser
+USER appuser
+
+# Expose port (can override at runtime)
 EXPOSE 8080
 
-# Run the Gateway with prod profile and dynamic env vars
-ENTRYPOINT ["sh", "-c", "java -Dspring.profiles.active=prod -Dserver.port=${GATEWAY_PORT} -Deureka.client.service-url.defaultZone=${EUREKA_DEFAULT_ZONE} -jar app.jar"]
+# Runtime arguments instead of ENV for sensitive values
+ENTRYPOINT ["java", "-jar", "app.jar"]

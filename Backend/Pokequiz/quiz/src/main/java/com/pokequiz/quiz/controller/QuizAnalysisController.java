@@ -32,7 +32,6 @@ public class QuizAnalysisController {
     public ResponseEntity<?> analyzeQuiz(
             @Parameter(description = "Unique identifier of the quiz session to analyze", example = "1")
             @PathVariable Long sessionId) {
-        System.out.println("bale bale"); // Consider removing this print statement in production code
         QuizAnalysis analysis = quizAnalysisService.analyzeQuiz(sessionId);
         return analysis != null ? ResponseEntity.ok(analysis) : ResponseEntity.badRequest().body("Failed to analyze quiz.");
     }

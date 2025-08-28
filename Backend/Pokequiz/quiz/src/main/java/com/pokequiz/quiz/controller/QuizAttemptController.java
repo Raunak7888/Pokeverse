@@ -19,7 +19,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/attempts")
-@CrossOrigin(origins = "http://localhost:3000")
 @Tag(name = "Quiz Attempt Controller", description = "APIs for managing and retrieving quiz attempts.")
 public class QuizAttemptController {
 

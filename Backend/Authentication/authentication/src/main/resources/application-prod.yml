@@ -1,3 +1,4 @@
+GATEWAY_URL: ${GATEWAY_URL}
 server:
   port: ${AUTH_PORT:8082}
 
@@ -14,11 +15,23 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: "${GATEWAY_URL}/authentication/login/oauth2/code/{registrationId}"
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://www.googleapis.com/oauth2/v4/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
 
 secret: ${JWT_SECRET}
-cors:
-  allowed-origin: ${ALLOWED_ORIGIN}
+
+allowed-origin: ${ALLOWED_ORIGINS}
+
 eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+    instance-id: ${spring.application.name}:${server.port}
   client:
     service-url:
       defaultZone: ${EUREKA_DEFAULT_ZONE}
@@ -27,3 +40,4 @@ jwt:
   expiration-ms: ${JWT_TIME:86400000}
 refresh-token:
   ttl-days: ${REFRESH_TOKEN_TTL:2}
+

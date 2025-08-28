@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from "react";
-import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
+import { Client, IMessage } from "@stomp/stompjs";
 import { useRouter } from "next/navigation";
 import { useMultiplayerQuestionStore } from "@/store/multiplayerQuestionStore";
 import { useMultiplayerResultStore } from "@/store/mulitplayerResultStore";
 import { Player, WsAnswerValidationDTO } from "@/utils/types";
+import backendUrl from "../backendUrl";
 
 export const useLobbyWebSocket = (
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>,
@@ -26,9 +26,15 @@ export const useLobbyWebSocket = (
   useEffect(() => {
     if (!roomId) return;
 
-    const socket = new SockJS("http://localhost:8083/ws");
+    // remove leading zeros from roomId
+    const id = roomId.replace(/^0+/, "");
+
+    const token = localStorage.getItem("token"); // adjust if you store JWT differently
+
     const client = new Client({
-      webSocketFactory: () => socket,
+      brokerURL: backendUrl.replace(/^http/, "ws") + "/quiz/ws/websocket",
+      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
@@ -36,9 +42,9 @@ export const useLobbyWebSocket = (
 
     client.onConnect = () => {
       setIsConnected(true);
-      const id = roomId.replace(/^0+/, "");
 
-      client.subscribe(`/topic/rooms/${id}/game`, (message) => {
+      // Subscribe to game events
+      client.subscribe(`/topic/rooms/${id}/game`, (message: IMessage) => {
         const currentCallbacks = callbacksRef.current;
 
         if (message.body === "Game started") {
@@ -53,7 +59,6 @@ export const useLobbyWebSocket = (
 
         try {
           const msg = JSON.parse(message.body);
-          console.log("[WS] Received:", msg);
 
           // Handle question message
           if (msg?.question && msg?.questionNumber !== undefined) {
@@ -63,7 +68,6 @@ export const useLobbyWebSocket = (
             ) {
               return;
             }
-
             const copy = JSON.parse(JSON.stringify(msg));
             currentCallbacks.setMultiplayerQuestion(copy);
             currentQuestionRef.current = copy;
@@ -74,7 +78,6 @@ export const useLobbyWebSocket = (
           if (msg.userId && msg.name && !msg.question) {
             currentCallbacks.setPlayers((prev) => {
               if (prev.some((p) => p.userId === msg.userId)) return prev;
-
               const updatedPlayers = [...prev, msg];
               localStorage.setItem("players", JSON.stringify(updatedPlayers));
               return updatedPlayers;
@@ -95,12 +98,11 @@ export const useLobbyWebSocket = (
     };
 
     client.onStompError = (frame) => {
-      console.error("[WS] STOMP Error:", frame.headers["message"]);
+      console.error("[WS] STOMP Error:", frame.headers["message"], frame.body);
       setIsConnected(false);
     };
 
     client.onDisconnect = () => {
-      console.log("[WS] Disconnected.");
       setIsConnected(false);
     };
 

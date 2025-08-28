@@ -1,22 +1,30 @@
-# Build Stage
-FROM maven:3.9.6-eclipse-temurin-21 AS build
+# ---- Stage 1: Build the JAR ----
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 
-# Copy project files
-COPY . .
+# Copy Maven/Gradle wrapper & config first for caching
+COPY mvnw pom.xml ./
+COPY .mvn .mvn
+# Download dependencies
+RUN ./mvnw dependency:go-offline
 
-# Build the project (skip tests)
-RUN mvn clean package -DskipTests
+# Copy source code and build
+COPY src src
+RUN ./mvnw clean package -DskipTests
 
-# Run Stage
+# ---- Stage 2: Run the application ----
 FROM eclipse-temurin:21-jdk
 WORKDIR /app
 
-# Copy built JAR from build stage
+# Copy built jar from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose dynamic port (optional for documentation purposes)
-EXPOSE 8761
+# Environment variables (can be overridden at runtime)
+ENV SPRING_PROFILES_ACTIVE=prod \
+    SERVER_PORT=8761
 
-# Start the app with prod profile and dynamic port
-ENTRYPOINT ["sh", "-c", "java -Dspring.profiles.active=prod -Dserver.port=${SERVER_PORT} -jar app.jar"]
+# Expose port
+EXPOSE ${SERVER_PORT}
+
+# Run the jar
+ENTRYPOINT ["java", "-jar", "app.jar"]

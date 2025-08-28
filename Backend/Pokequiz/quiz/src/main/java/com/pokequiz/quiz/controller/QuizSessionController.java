@@ -8,17 +8,17 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import org.springframework.web.bind.annotation.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/sessions")
-@CrossOrigin(origins = "http://localhost:3000")
 @Tag(name = "Quiz Session Controller", description = "APIs for managing quiz sessions, including creation, updates, and retrieval.")
 public class QuizSessionController {
 
@@ -29,25 +29,22 @@ public class QuizSessionController {
     }
 
     @PostMapping("/create")
-    @Operation(summary = "Create a new quiz session",
-            description = "Initiates a new quiz session for a user with specified parameters like total questions, difficulty, region, and quiz type.",
-            requestBody = @RequestBody(
-                    description = "Details for creating a new quiz session",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = QuizSessionDTO.class))
-            ),
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Quiz session created successfully",
-                            content = @Content(schema = @Schema(implementation = QuizSession.class))),
-                    @ApiResponse(responseCode = "400", description = "Invalid request body (e.g., missing user ID, invalid total questions, or null parameters)")
-            })
     public ResponseEntity<?> createSession(@RequestBody QuizSessionDTO dto) {
+
+        // ✅ let backend set startTime
+        dto.setStartTime(LocalDateTime.now());
+
         if (dto.getUserId() == null || dto.getTotalQuestions() <= 0 ||
                 dto.getDifficulty() == null || dto.getRegion() == null || dto.getQuizType() == null) {
+
             return ResponseEntity.badRequest().body("Invalid request body");
         }
-        return ResponseEntity.ok(quizSessionService.createSession(dto));
+
+        return ResponseEntity.ok(
+                quizSessionService.createSession(dto)
+        );
     }
+
 
     @PutMapping("/update/{sessionId}")
     @Operation(summary = "Update quiz session status",
@@ -86,7 +83,7 @@ public class QuizSessionController {
         return ResponseEntity.ok(sessions);
     }
 
-    @GetMapping("/{sessionId}")
+    @GetMapping("/session/{sessionId}")
     @Operation(summary = "Get a specific quiz session by ID",
             description = "Retrieves details of a single quiz session using its unique identifier.",
             parameters = {

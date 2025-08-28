@@ -1,27 +1,17 @@
-# =========================
-# Server Port
-# =========================
 server:
   port: ${GATEWAY_PORT}
 
-# =========================
-# Eureka Configuration
-# =========================
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_DEFAULT_ZONE}
 
-# =========================
-# Redis Configuration
-# =========================
 spring:
   data:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
+      database: 0
+      timeout: 2000ms
 
-# =========================
-# JWT Secret
-# =========================
 secret: ${JWT_SECRET}

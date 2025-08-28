@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { User } from './useUser';
+import backendUrl from '@/components/backendUrl';
 
 interface CreateRoomParams {
   roomName: string;
@@ -25,7 +26,7 @@ export const useCreateRoom = () => {
 
     try {
       // Step 1: Create the room
-      const createRes = await fetch('http://localhost:8083/api/rooms/create', {
+      const createRes = await fetch(backendUrl+'/quiz/api/rooms/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -40,9 +41,8 @@ export const useCreateRoom = () => {
       if (!createRes.ok) {
         throw new Error(roomData.message || 'Failed to create room.');
       }
-      console.log(user.profilePicUrl);
       // Step 2: Join the newly created room
-      const joinRes = await fetch(`http://localhost:8083/api/rooms/join?roomId=${roomData.id}`, {
+      const joinRes = await fetch(backendUrl+`/quiz/api/rooms/join?roomId=${roomData.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -58,7 +58,7 @@ export const useCreateRoom = () => {
       }
 
       // Step 3: Fetch final room and player data
-      const dataResponse = await fetch(`http://localhost:8083/api/rooms/${roomData.id}/${user.id}`);
+      const dataResponse = await fetch(backendUrl+`/quiz/api/rooms/${roomData.id}/${user.id}`);
       if (!dataResponse.ok) {
         throw new Error('Failed to fetch final room data.');
       }

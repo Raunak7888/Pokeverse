@@ -1,5 +1,6 @@
 package com.pokequiz.quiz.controller;
 
+import com.pokequiz.quiz.dto.CreateRoomRequest;
 import com.pokequiz.quiz.dto.PlayerDto;
 import com.pokequiz.quiz.dto.RoomDto;
 import com.pokequiz.quiz.model.Player;
@@ -10,7 +11,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/rooms")
-@CrossOrigin(origins = "http://localhost:3000") // ✅ Class-level
 @RequiredArgsConstructor
 @Tag(name = "Room Controller", description = "APIs for managing multiplayer quiz rooms and player interactions.")
 public class RoomController {
@@ -33,7 +32,7 @@ public class RoomController {
     @PostMapping("/create")
     @Operation(summary = "Create a new quiz room",
             description = "Creates a new multiplayer quiz room with specified settings.",
-            requestBody = @RequestBody(
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Details for creating a new room, including host user ID and room name.",
                     required = true,
                     content = @Content(schema = @Schema(implementation = RoomDto.class))
@@ -43,8 +42,8 @@ public class RoomController {
                             content = @Content(schema = @Schema(implementation = Room.class))),
                     @ApiResponse(responseCode = "400", description = "Invalid room creation request")
             })
-    public ResponseEntity<?> createRoom(@RequestBody RoomDto roomDto) {
-        return roomService.createRoom(roomDto);
+    public ResponseEntity<?> createRoom(@RequestBody CreateRoomRequest request) {
+        return roomService.createRoom(request);
     }
 
     @PostMapping("/join")
@@ -53,7 +52,7 @@ public class RoomController {
             parameters = {
                     @Parameter(name = "roomId", description = "Unique identifier of the room to join", required = true, example = "1")
             },
-            requestBody = @RequestBody(
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Player details for joining the room, including user ID and player name.",
                     required = true,
                     content = @Content(schema = @Schema(implementation = PlayerDto.class))
@@ -117,4 +116,6 @@ public class RoomController {
     public ResponseEntity<?> allRooms() {
         return ResponseEntity.ok(roomService.allRooms());
     }
+
+
 }

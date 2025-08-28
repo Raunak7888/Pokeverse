@@ -1,5 +1,6 @@
 "use client";
 
+import backendUrl from "@/components/backendUrl";
 import { FcGoogle } from "react-icons/fc";
 export default function Auth() {
   async function handleGoogleLogin(
@@ -7,16 +8,16 @@ export default function Auth() {
   ): Promise<void> {
     event.preventDefault();
     try {
-      const response = await fetch("http://localhost:8082/auth/login", {
-        credentials: "include", // Needed if cookies are involved
+      const response = await fetch(backendUrl + "/authentication/auth/login", {
+        credentials: "include",
       });
       const data = await response.json();
       if (data.message) {
-        window.location.href =
-          "http://localhost:8082/oauth2/authorization/google";
+        window.location.href = backendUrl + "/authentication/oauth2/authorization/google";
       } else {
         console.error("Unexpected response:", data);
       }
+
     } catch (error) {
       console.error("Google login failed:", error);
     }
@@ -46,7 +47,7 @@ export default function Auth() {
                 className="bg-white border-[2px] border-black rounded-full p-2 w-24 h-24 flex items-center justify-center"
                 onClick={handleGoogleLogin}
               >
-                <FcGoogle size={60}/>
+                <FcGoogle size={60} />
               </div>
             </div>
           </div>

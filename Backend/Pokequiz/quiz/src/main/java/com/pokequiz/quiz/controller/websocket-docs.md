@@ -29,9 +29,9 @@ These are the destinations where clients can send messages to the server.
 * **Payload (`Message` DTO - JSON):**
   ```json
   {
-    "userId": "string",   // The unique ID of the user sending the message (e.g., "user123")
-    "username": "string", // The username of the sender (e.g., "PlayerOne")
-    "content": "string"   // The text content of the chat message (e.g., "Hey everyone!")
+    "userId": "string",   
+    "username": "string", 
+    "content": "string"  
   }
   ```
 * **Example Client Send:**
@@ -85,11 +85,11 @@ These are the destinations where clients can send messages to the server.
 * **Payload (`WsAnswerValidationDTO` DTO - JSON):**
   ```json
   {
-    "userId": 1,           // The unique ID of the user submitting the answer (Long)
-    "roomId": 123,         // The ID of the room the game is in (Long)
-    "questionId": 456,     // The ID of the question being answered (Long)
-    "answer": "string",    // The player's selected answer text (String)
-    "correct": false       // This field is ignored by the server; the server determines correctness.
+    "userId": 1,         
+    "roomId": 123,         
+    "questionId": 456,   
+    "answer": "string", 
+    "correct": false 
   }
   ```
 * **Example Client Send:**
@@ -126,12 +126,15 @@ These are the topics that clients can subscribe to receive real-time updates fro
     * **Game Start/End Notification (String):**
       ```json
       "Game started"
-      // or
+      ```
+      ```json
       "Game ended"
-      // or
-      "Answer cannot be null" // Error message for validation
-      // or
-      "Question not found in this room" // Error message for validation
+       ```
+      ```json
+      "Answer cannot be null" 
+       ```
+      ```json
+      "Question not found in this room" 
       ```
     * **New Question (`GameQuestionDto` - JSON):**
       ```json
@@ -145,7 +148,7 @@ These are the topics that clients can subscribe to receive real-time updates fro
           "options": ["Pikachu", "Charmander", "Squirtle", "Bulbasaur"],
           "correctAnswer": "Pikachu"
         },
-        "questionNumber": 5 // Current round number
+        "questionNumber": 5 
       }
       ```
     * **Answer Validation Result (`WsAnswerValidationDTO` - JSON):**
@@ -155,7 +158,7 @@ These are the topics that clients can subscribe to receive real-time updates fro
         "roomId": 101,
         "questionId": 301,
         "answer": "Pikachu",
-        "correct": true // Server-determined correctness
+        "correct": true
       }
       ```
 * **Example Client Subscribe:**
@@ -216,9 +219,8 @@ The `WebSocketController` also exposes one standard HTTP REST endpoint.
                 "correctAnswer": "Paris",
                 "isCorrect": true,
                 "selectedOption": "Paris",
-                "timeTaken": 10 // time in seconds
-              },
-              // ... more detailed answers
+                "timeTaken": 10 
+              }
             ]
           }
           ```

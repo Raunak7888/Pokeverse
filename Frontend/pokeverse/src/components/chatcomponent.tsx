@@ -46,7 +46,6 @@ const ChatComponent: React.FC<ChatProps> = ({ stompClient }) => {
         try {
           const msg = JSON.parse(message.body) as Message;
           setMessages((prev) => [...prev, msg]);
-          console.log("Received:", msg);
         } catch (err) {
           console.error("Failed to parse message:", err);
         }
@@ -77,14 +76,13 @@ const ChatComponent: React.FC<ChatProps> = ({ stompClient }) => {
       body: JSON.stringify(msg),
     });
 
-    console.log("Sent:", msg);
     setInput("");
   };
 
   return (
     <div className="max-w-lg mx-auto bg-[#1e1e1e] h-120 p-4 rounded-3xl shadow-lg font-[Aclonica]">
       <div
-        className="bg-[#1a1a1a] p-4 h-100 overflow-y-auto rounded-t-3xl border border-gray-700 mb-2 space-y-2"
+        className="bg-[#1a1a1a] p-4 h-100 overflow-y-auto leaderboard-scroll rounded-t-3xl border border-gray-700 mb-2 space-y-2"
         style={{
           boxShadow:
             "0 0 10px 2px rgba(255, 255, 255, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.2)",

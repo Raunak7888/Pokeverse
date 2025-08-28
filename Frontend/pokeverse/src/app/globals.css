@@ -87,3 +87,21 @@ body {
   animation: sparkle 1.2s ease-in-out infinite;
 }
 
+.neon-glow {
+  text-shadow: 0 0 5px #00f, 0 0 10px #00f, 0 0 20px #00f, 0 0 40px #0ff, 0 0 80px #0ff;
+}
+
+.bg-animated-sky {
+  /* You can use a CSS animation for the clouds */
+  background: linear-gradient(180deg, #4c4cff 0%, #1a1aff 100%);
+  animation: clouds 60s infinite linear;
+}
+
+@keyframes clouds {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 100% 100%;
+  }
+}

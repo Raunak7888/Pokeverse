@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/quiz")
-@CrossOrigin(origins = "http://localhost:3000")
 @Tag(name = "Quiz Management Controller", description = "APIs for managing quiz questions (CRUD operations and various fetching methods).")
 public class QuizController {
 

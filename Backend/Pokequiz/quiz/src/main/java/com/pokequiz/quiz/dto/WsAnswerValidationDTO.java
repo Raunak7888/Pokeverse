@@ -17,4 +17,5 @@ public class WsAnswerValidationDTO {
     private String answer;
     @Schema(description = "Indicates whether the submitted answer is correct (typically set by the server after validation).", example = "true")
     private boolean correct;
+    private int score;
 }

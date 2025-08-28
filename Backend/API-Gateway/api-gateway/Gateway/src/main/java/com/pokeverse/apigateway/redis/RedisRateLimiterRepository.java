@@ -1,6 +1,8 @@
 package com.pokeverse.apigateway.redis;
 
 import com.pokeverse.apigateway.model.TokenBucket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -11,6 +13,8 @@ import java.util.Map;
 
 @Component
 public class RedisRateLimiterRepository {
+    private static final Logger log = LoggerFactory.getLogger(RedisRateLimiterRepository.class);
+
     private final HashOperations<String, String, String> hashOps;
     private final RedisTemplate<String, String> redisTemplate;
 
@@ -40,13 +44,12 @@ public class RedisRateLimiterRepository {
                 tokens = capacity;
                 lastRefill = now;
             } else {
-                tokens = parseDoubleOrDefault(stored.get("tokens"), capacity, key);
-                lastRefill = parseLongOrDefault(stored.get("lastRefillTimestamp"), now, key);
+                tokens = parseDoubleOrDefault(stored.get("tokens"), capacity);
+                lastRefill = parseLongOrDefault(stored.get("lastRefillTimestamp"), now);
             }
 
             double elapsedSeconds = (now - lastRefill) / 1000.0;
             double newTokens = Math.min(capacity, tokens + elapsedSeconds * refillRatePerSecond);
-
 
             // Save updated state back to Redis
             hashOps.put(key, "tokens", String.valueOf(newTokens));
@@ -56,6 +59,7 @@ public class RedisRateLimiterRepository {
             return new TokenBucket(newTokens, now);
 
         } catch (Exception e) {
+            log.error("Error retrieving or refilling bucket from Redis for key: {}. Falling back to default capacity.", key, e);
             return new TokenBucket(capacity, now);
         }
     }
@@ -66,11 +70,11 @@ public class RedisRateLimiterRepository {
             hashOps.put(key, "lastRefillTimestamp", String.valueOf(bucket.getLastRefillTimestamp()));
             redisTemplate.expire(key, Duration.ofDays(1));
         } catch (Exception e) {
-            System.out.println("⚠️ [saveBucket] Error saving bucket to Redis for key: " + key);
+            log.error("Error saving bucket to Redis for key: {}", key, e);
         }
     }
 
-    private double parseDoubleOrDefault(String value, double defaultValue, String key) {
+    private double parseDoubleOrDefault(String value, double defaultValue) {
         try {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
@@ -78,7 +82,7 @@ public class RedisRateLimiterRepository {
         }
     }
 
-    private long parseLongOrDefault(String value, long defaultValue, String key) {
+    private long parseLongOrDefault(String value, long defaultValue) {
         try {
             return Long.parseLong(value);
         } catch (NumberFormatException e) {

@@ -1,79 +1,88 @@
-import React, { useState } from "react";
+"use client";
+
+import React from "react";
 import Pokeball from "@/components/pokeball";
 import OptionButton from "@/components/optionButton";
 import PokeButton from "@/components/PokemonButton";
 import { useClock } from "@/components/GameClockContext";
+import { motion } from "framer-motion";
 
 const QuestionComponent = ({
   questionNumber,
   questionText,
   optionsText,
+  selectedOption,
   onSelect,
   onSubmit,
-  duration = 0,
   isTimebound = false,
+  endTime, // absolute timestamp from server
 }: any) => {
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const { elapsed } = useClock(); // just triggers rerender every tick
+  const remaining = isTimebound ? Math.max(0, endTime - Date.now()) : 0;
 
-  // ✅ Only call useClock if timebound
-  const clockData = isTimebound ? useClock() : null;
-  const elapsed = clockData?.elapsed ?? 0;
-
-  const remaining = Math.max(0, duration - elapsed);
-  const percentage =
-    isTimebound && duration > 0 ? (remaining / duration) * 100 : 100;
+  const percentage = isTimebound && endTime
+    ? (remaining / (endTime - (endTime - 30_000))) * 100 // assumes 30s window
+    : 100;
 
   const getClockColor = () => {
-    if (percentage > 66) return "#ffffff";
-    if (percentage > 33) return "#dddddd";
-    return "#aaaaaa";
+    if (percentage > 66) return "#22c55e";
+    if (percentage > 33) return "#facc15";
+    return "#ef4444";
   };
 
   const handleOptionClick = (optionText: string) => {
     const newSelection = selectedOption === optionText ? null : optionText;
-    setSelectedOption(newSelection);
+    onSelect(newSelection);
   };
-
 
   const handleSubmit = () => {
     if (selectedOption) {
-      onSelect(selectedOption);
       onSubmit?.();
     }
   };
 
   return (
-    <div className="relative flex items-center ml-9 justify-center p-[5px]">
+    <div className="relative flex items-center justify-center p-4">
       <div
-        className="rounded-[5vh] w-[71vw] h-[66vh] flex items-center justify-center"
+        className="rounded-[5vh] w-[72vw] sm:w-[60vw] h-[68vh] p-3 flex items-center justify-center transition-all duration-500"
         style={{
           background: isTimebound
             ? `conic-gradient(${getClockColor()} ${percentage}%, transparent ${percentage}%)`
             : "none",
         }}
       >
-        <div className="bg-black rounded-[5vh]">
-          <div className="relative z-10 flex flex-col items-center justify-center bg-black text-white rounded-[5vh] shadow-lg w-[80vw] sm:w-[70vw] overflow-hidden">
-            <div className="flex flex-col items-center space-y-4 bg-[#1e1e1e] p-6 rounded-[5vh] shadow-lg w-full">
-              <div className="flex items-center justify-center sm:justify-start gap-8 bg-[#3C3C3C] p-4 w-full rounded-full">
-                <div className="relative sm:left-[0.7vw] sm:top-[0.7vh]">
-                  <Pokeball
-                    Text={String(questionNumber)}
-                    size={100}
-                    css="sm:right-[1.7rem] sm:bottom-[-1.3rem]"
-                  />
-                </div>
-                <div className="bg-[#575757] px-6 py-4 sm:p-5 rounded-full text-lg sm:text-xl font-semibold">
-                  {questionText}
-                </div>
+        <div className="w-full h-full flex items-center rounded-[5vh] justify-center">
+          <div className="relative z-10 flex flex-col items-center justify-center p-10 text-white shadow-lg w-[85vw] sm:w-[65vw] overflow-hidden">
+            {/* Question Header */}
+            <div className="flex items-center gap-6 bg-[#2c2c2c] p-4 w-full rounded-4xl shadow-md">
+              <div className="relative flex-shrink-0">
+                <Pokeball
+                  Text={String(questionNumber)}
+                  size={90}
+                  css="right-[1rem] bottom-[-1rem]"
+                />
               </div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-[#444] px-5 py-3 rounded-4xl text-lg sm:text-xl font-semibold leading-snug flex-1 text-center sm:text-left"
+              >
+                {questionText}
+              </motion.div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4 mt-8 w-full">
-                {(["A", "B", "C", "D"] as const).map((key) => {
-                  const optionText = optionsText[key];
-                  return (
+            {/* Options */}
+            <div className="grid grid-cols-2 gap-4 mt-8 w-full">
+              {(["A", "B", "C", "D"] as const).map((key, idx) => {
+                const optionText = optionsText[key];
+                return (
+                  <motion.div
+                    key={key}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                  >
                     <OptionButton
-                      key={key}
                       optionKey={key}
                       text={optionText}
                       imageSrc={
@@ -86,18 +95,29 @@ const QuestionComponent = ({
                           : "/croped-bulbasaur.png"
                       }
                       selectedOption={selectedOption}
-                      onOptionClick={() => handleOptionClick(optionText)} // ✅ Pass text, not key
+                      onOptionClick={() => handleOptionClick(optionText)}
                     />
-                  );
-                })}
-              </div>
+                  </motion.div>
+                );
+              })}
+            </div>
 
+            {/* Submit Button */}
+            <motion.div
+              className="mt-10 rounded-4xl"
+              animate={
+                selectedOption
+                  ? { scale: [1, 1.05, 1], boxShadow: "0 0 20px #facc15" }
+                  : { scale: 1, boxShadow: "none" }
+              }
+              transition={{ repeat: selectedOption ? Infinity : 0, duration: 1.5 }}
+            >
               <PokeButton
                 buttonName="Submit"
                 onClick={handleSubmit}
                 disabled={!selectedOption}
               />
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import PokeButton from "@/components/PokemonButton";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import Cookies from "js-cookie";
+import backendUrl from "@/components/backendUrl";
 
 export default function Quiz() {
   const router = useRouter();
@@ -67,7 +68,7 @@ const handleSinglePlayer = useCallback(async () => {
   setLoader(true);
 
   try {
-    const res = await fetch("http://localhost:8083/api/sessions/create", {
+    const res = await fetch(backendUrl+"/quiz/api/sessions/create", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

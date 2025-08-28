@@ -1,37 +1,108 @@
 "use client";
 import React from "react";
 
-interface PokeButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface PokeButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   buttonName: string;
+
+  // Size customization
+  width?: string | number;
+  topHeight?: string | number;
+  middleHeight?: string | number;
+  bottomHeight?: string | number;
+
+  // Text customization
+  textFont?: string;
+  fontSize?: string | number;
+  textColor?: string;
+  textShadowColor?: string;
+
+  // Color customization
+  topColor?: string;
+  middleColor?: string;
+  bottomColor?: string;
+  borderColor?: string;
+  buttonCss?: string;
 }
 
-export default function PokeButton({ buttonName, ...rest }: PokeButtonProps) {
+export default function PokeButton({
+  buttonName,
+  width = 180,
+  topHeight = 20,
+  middleHeight = 10,
+  bottomHeight = 20,
+
+  textFont = "Piedra",
+  fontSize = 24,
+  textColor = "white",
+  textShadowColor = "#000",
+
+  topColor = "#EE4035",
+  middleColor = "#1e1e1e",
+  bottomColor = "white",
+  borderColor = "black",
+  buttonCss = "",
+  ...rest
+}: PokeButtonProps) {
   return (
     <button
-      className="flex justify-center items-center gap-0 w-full border-none bg-transparent p-0"
+      className={`flex justify-center items-center gap-0 w-full border-none bg-transparent p-0 ${buttonCss}`}
       {...rest}
     >
-      <div className="flex flex-col items-center w-[180px] sm:w-[200px] pointer-events-none">
-        {/* Top red part */}
-        <div className="h-[20px] sm:h-[24px] w-full rounded-t-4xl border-black border-2 bg-[#EE4035]" />
+      <div
+        className="flex flex-col items-center pointer-events-none"
+        style={{ width }}
+      >
+        {/* Top section */}
+        <div
+          style={{
+            height: topHeight,
+            width: "100%",
+            borderRadius: "9999px 9999px 0 0",
+            backgroundColor: topColor,
+            border: `2px solid ${borderColor}`,
+            borderBottom: "none",
+          }}
+        />
 
         {/* Middle text section */}
-        <div className="bg-[#1e1e1e] h-[10px] sm:h-[14px] w-full text-white z-10 flex justify-center items-center border-x-2 border-black">
+        <div
+          style={{
+            height: middleHeight,
+            width: "100%",
+            backgroundColor: middleColor,
+            color: textColor,
+            borderLeft: `2px solid ${borderColor}`,
+            borderRight: `2px solid ${borderColor}`,
+            zIndex: 10,
+          }}
+          className="flex justify-center items-center"
+        >
           <div
-            className="text-2xl sm:text-3xl tracking-widest font-extrabold font-[Piedra] pointer-events-none"
             style={{
-              textShadow:
-                "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
-              color: "white",
+              fontSize,
+              fontFamily: textFont,
+              textShadow: `-2px -2px 0 ${textShadowColor}, 
+                           2px -2px 0 ${textShadowColor}, 
+                           -2px 2px 0 ${textShadowColor}, 
+                           2px 2px 0 ${textShadowColor}`,
             }}
+            className="font-extrabold tracking-widest pointer-events-none"
           >
             {buttonName}
           </div>
         </div>
 
-        {/* Bottom white part */}
-        <div className="bg-white h-[20px] sm:h-[24px] w-full rounded-b-4xl border-black border-2" />
+        {/* Bottom section */}
+        <div
+          style={{
+            height: bottomHeight,
+            width: "100%",
+            borderRadius: "0 0 9999px 9999px",
+            backgroundColor: bottomColor,
+            border: `2px solid ${borderColor}`,
+            borderTop: "none",
+          }}
+        />
       </div>
     </button>
   );

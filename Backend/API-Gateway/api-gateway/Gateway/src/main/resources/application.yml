@@ -4,19 +4,29 @@
 spring:
   application:
     name: apiGateway
-  profiles:
-    active: dev
-
   codec:
     max-in-memory-size: 16KB
-
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
       discovery:
         locator:
           enabled: true
-
-
       routes:
         - id: auth
           uri: lb://AUTH-SERVICE
@@ -24,39 +34,41 @@ spring:
             - Path=/authentication/**
           filters:
             - StripPrefix=1
-
-        - id: quiz
+        - id: quiz-http
           uri: lb://QUIZ-SERVICE
           predicates:
             - Path=/quiz/**
           filters:
             - StripPrefix=1
-
+        - id: quiz-ws
+          uri: lb:ws://QUIZ-SERVICE
+          predicates:
+            - Path=/quiz/ws/**
+          filters:
+            - StripPrefix=1
         - id: matrix
           uri: lb://MATRIX-SERVICE
           predicates:
             - Path=/matrix/**
           filters:
             - StripPrefix=1
-
         - id: dex
           uri: lb://DEX-SERVICE
           predicates:
             - Path=/dex/**
           filters:
             - StripPrefix=1
-
         - id: scribble
           uri: lb://SCRIBBLE-SERVICE
           predicates:
             - Path=/scribble/**
           filters:
             - StripPrefix=1
-
         - id: health
           uri: http://localhost:${server.port}
           predicates:
             - Path=/actuator/health
+
 
 # =========================
 # Actuator Configuration
@@ -82,6 +94,7 @@ logging:
 # =========================
 server:
   max-http-header-size: 16KB
+  port: 8080
 
 # =========================
 # Rate Limiting Configuration
@@ -89,35 +102,40 @@ server:
 ratelimit:
   configs:
     auth:
-      auth_test:
+      'auth_user_profile_pic_STAR':
+        IP:
+          capacity: 10
+          refillRatePerSecond: 2
+        PLAN:
+          capacity: 10
+          refillRatePerSecond: 2
+      'auth_STAR':
         IP:
           capacity: 5
           refillRatePerSecond: 0.1
-
-    dex:
-      api_test:
-        IP:
+        PLAN:
           capacity: 5
-          refillRatePerSecond: 0.1
-
-    matrix:
-      api_matrix_test:
-        IP:
-          capacity: 5
-          refillRatePerSecond: 0.1
-
-    scribble:
-      api_room_test:
-        IP:
-          capacity: 5
-          refillRatePerSecond: 0.1
-
+          refillRatePerSecond: 0.3
     quiz:
-      api_quiz_game_test:
-        IP:
-          capacity: 5
-          refillRatePerSecond: 0.1
+      'quiz_STAR':
+        PLAN:
+          capacity: 20
+          refillRatePerSecond: 1
 
+
+
+
+
+
+# =========================
+# Eureka Configuration
+# =========================
 eureka:
   instance:
+    hostname: localhost
     prefer-ip-address: true
+    ip-address: 127.0.0.1
+    instance-id: ${spring.application.name}:${server.port}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}

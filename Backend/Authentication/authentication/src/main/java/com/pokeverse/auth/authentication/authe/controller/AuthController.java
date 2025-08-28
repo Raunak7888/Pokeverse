@@ -86,7 +86,7 @@ public class AuthController {
     })
     @GetMapping("/success")
     public ResponseEntity<?> loginSuccess(
-            @Parameter(hidden = true) @AuthenticationPrincipal OAuth2User principal) { // @Parameter(hidden = true) hides this from swagger UI as it's handled by Spring Security
+            @Parameter(hidden = true) @AuthenticationPrincipal OAuth2User principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User not authenticated"));
         }
@@ -95,6 +95,7 @@ public class AuthController {
         String name = principal.getAttribute("name");
         String profilePicUrl = principal.getAttribute("picture");
 
+        // ✅ Find or create user
         User user = userRepository.findByEmail(email).orElseGet(() -> {
             User newUser = User.builder()
                     .email(email)
@@ -104,15 +105,26 @@ public class AuthController {
             return userRepository.save(newUser);
         });
 
+        // ✅ Always issue new tokens
         String accessToken = jwtUtil.generateToken(user.getEmail(), user.getId());
         String refreshToken = userService.refreshToken();
 
-        RToken rToken = RToken.builder()
-                .token(refreshToken)
-                .expirationTime(userService.getRefreshTokenExpiry())
-                .userId(user)
-                .build();
-        rTokenRepository.save(rToken);
+        // ✅ Find existing refresh token for user
+        Optional<RToken> existingToken = rTokenRepository.findByUserId(user);
+
+        if (existingToken.isPresent()) {
+            RToken rToken = existingToken.get();
+            rToken.setToken(refreshToken);
+            rToken.setExpirationTime(userService.getRefreshTokenExpiry());
+            rTokenRepository.save(rToken); // update
+        } else {
+            RToken rToken = RToken.builder()
+                    .token(refreshToken)
+                    .expirationTime(userService.getRefreshTokenExpiry())
+                    .userId(user)
+                    .build();
+            rTokenRepository.save(rToken); // insert new
+        }
 
         return ResponseEntity.ok(Map.of(
                 "user", user,
@@ -120,6 +132,7 @@ public class AuthController {
                 "refresh_token", refreshToken
         ));
     }
+
 
     @Operation(summary = "Get logged-in user's information",
             description = "Retrieves the details of the currently authenticated user by validating their JWT access token provided in the Authorization header.")
