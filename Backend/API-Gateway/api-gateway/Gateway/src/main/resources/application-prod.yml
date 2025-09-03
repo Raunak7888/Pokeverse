@@ -7,11 +7,10 @@ eureka:
       defaultZone: ${EUREKA_DEFAULT_ZONE}
 
 spring:
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-      database: 0
-      timeout: 2000ms
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT}
+    database: 0
+    timeout: 2000ms
 
 secret: ${JWT_SECRET}

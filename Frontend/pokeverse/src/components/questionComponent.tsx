@@ -17,12 +17,15 @@ const QuestionComponent = ({
   isTimebound = false,
   endTime, // absolute timestamp from server
 }: any) => {
-  const { elapsed } = useClock(); // just triggers rerender every tick
-  const remaining = isTimebound ? Math.max(0, endTime - Date.now()) : 0;
+  // ✅ Only useClock if timebound
+  const { elapsed } = isTimebound ? useClock() : { elapsed: 0 };
 
-  const percentage = isTimebound && endTime
-    ? (remaining / (endTime - (endTime - 30_000))) * 100 // assumes 30s window
-    : 100;
+  const remaining = isTimebound && endTime ? Math.max(0, endTime - Date.now()) : 0;
+
+  const percentage =
+    isTimebound && endTime
+      ? (remaining / (endTime - (endTime - 30_000))) * 100 // assumes 30s window
+      : 100;
 
   const getClockColor = () => {
     if (percentage > 66) return "#22c55e";
@@ -49,12 +52,19 @@ const QuestionComponent = ({
           background: isTimebound
             ? `conic-gradient(${getClockColor()} ${percentage}%, transparent ${percentage}%)`
             : "none",
+
         }}
       >
-        <div className="w-full h-full flex items-center rounded-[5vh] justify-center">
+        <div className="w-full h-full flex items-center rounded-[5vh] justify-center"
+          style={{
+            backgroundColor: isTimebound ? "#1a1a1a" : "transparent",
+          }}
+        >
           <div className="relative z-10 flex flex-col items-center justify-center p-10 text-white shadow-lg w-[85vw] sm:w-[65vw] overflow-hidden">
             {/* Question Header */}
-            <div className="flex items-center gap-6 bg-[#2c2c2c] p-4 w-full rounded-4xl shadow-md">
+            <div className="flex items-center gap-6 bg-[#2c2c2c] p-4 w-full rounded-4xl shadow-md"
+             
+            >
               <div className="relative flex-shrink-0">
                 <Pokeball
                   Text={String(questionNumber)}
@@ -89,10 +99,10 @@ const QuestionComponent = ({
                         key === "A"
                           ? "/croped-pikachu.png"
                           : key === "B"
-                          ? "/croped-charmander.png"
-                          : key === "C"
-                          ? "/croped-squirtle.png"
-                          : "/croped-bulbasaur.png"
+                            ? "/croped-charmander.png"
+                            : key === "C"
+                              ? "/croped-squirtle.png"
+                              : "/croped-bulbasaur.png"
                       }
                       selectedOption={selectedOption}
                       onOptionClick={() => handleOptionClick(optionText)}

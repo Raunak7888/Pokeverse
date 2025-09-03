@@ -28,9 +28,8 @@ allowed-origin: ${ALLOWED_ORIGINS}
 
 eureka:
   instance:
-    hostname: localhost
-    prefer-ip-address: true
-    ip-address: 127.0.0.1
+    prefer-ip-address: false
+    hostname: ${HOSTNAME:auth-service}
     instance-id: ${spring.application.name}:${server.port}
   client:
     service-url:

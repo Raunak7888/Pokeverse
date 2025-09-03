@@ -1,6 +1,6 @@
 spring:
   application:
-    name: discoveryServer
+    name: DISCOVERY-SERVER
   profiles:
     active: dev
 eureka:

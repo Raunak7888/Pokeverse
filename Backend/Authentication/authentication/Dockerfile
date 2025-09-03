@@ -1,45 +1,22 @@
 # =========================
-# Stage 1: Build the JAR
-# =========================
-FROM eclipse-temurin:21-jdk AS builder
-
-WORKDIR /app
-
-# Copy Maven wrapper and build files first (for caching dependencies)
-COPY mvnw ./
-COPY .mvn .mvn
-COPY pom.xml ./
-
-# Download dependencies
-RUN ./mvnw dependency:go-offline -B
-
-# Copy source code
-COPY src src
-
-# Build the application without tests
-RUN ./mvnw clean package -DskipTests
-
-# =========================
-# Stage 2: Create Runtime Image
+# Runtime Image Only
 # =========================
 FROM eclipse-temurin:21-jre
-
 WORKDIR /app
 
 # Security: Use non-root user
 RUN addgroup --system spring && adduser --system --ingroup spring spring
 USER spring:spring
 
-# Expose service port (use ARG for flexibility)
-ARG APP_PORT=8082
-EXPOSE ${APP_PORT}
+# Copy prebuilt JAR from host (after mvn package)
+COPY target/*.jar app.jar
 
-# Copy JAR from builder stage (rename to app.jar)
-COPY --from=builder /app/target/*.jar app.jar
-
-# Environment variables (NO secrets here; pass secrets at runtime via `docker run -e`)
+# Environment (can be overridden at runtime)
 ENV SPRING_PROFILES_ACTIVE=prod \
-    SERVER_PORT=${APP_PORT}
+    SERVER_PORT=8081
 
-# Run the application
+# Expose service port
+EXPOSE 8081
+
+# Run the JAR
 ENTRYPOINT ["java", "-jar", "app.jar"]

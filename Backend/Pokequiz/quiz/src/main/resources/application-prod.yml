@@ -1,0 +1,19 @@
+server:
+  port: ${QUIZ_PORT}
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASS}
+
+eureka:
+  instance:
+    prefer-ip-address: false
+    hostname: ${HOSTNAME:quiz-service}
+    instance-id: ${spring.application.name}:${server.port}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE}
+
+allowed-origin: ${CORS_ALLOWED_ORIGIN}
