@@ -41,7 +41,7 @@ const Result: React.FC<ResultProps> = ({ isCorrect, onNext }) => {
               )}
 
               <h1
-                className={`text-4xl md:text-5xl font-[Piedra] tracking-wide 
+                className={`text-4xl md:text-5xl font-piedra tracking-wide 
                   ${isCorrect
                     ? "text-green-400 drop-shadow-[0_0_20px_rgba(34,197,94,0.7)]"
                     : "text-red-400 drop-shadow-[0_0_20px_rgba(239,68,68,0.7)]"}`}
@@ -55,7 +55,7 @@ const Result: React.FC<ResultProps> = ({ isCorrect, onNext }) => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-lg md:text-xl font-[Mogra] text-gray-200"
+              className="text-lg md:text-xl font-mogra text-gray-200"
             >
               {isCorrect
                 ? "Awesome! You nailed it 🎉"

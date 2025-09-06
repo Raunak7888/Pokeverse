@@ -44,7 +44,7 @@ const Join = () => {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleJoin(); // ✅ Enter triggers join
     }
@@ -105,17 +105,23 @@ const Join = () => {
 
       toast.success("Joined room successfully!");
       router.push("/quiz/multiplayer/lobby");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error joining room:", error);
-      toast.error(error.message || "Failed to join the room.");
-    } finally {
+
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to join the room.");
+      }
+    }
+    finally {
       setIsJoining(false);
     }
   };
 
   return (
     <motion.div
-      className="flex items-center justify-center flex-col h-full text-white font-[Piedra] tracking-widest"
+      className="flex items-center justify-center flex-col h-full text-white font-piedra tracking-widest"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
@@ -136,7 +142,7 @@ const Join = () => {
                 maxLength={1}
                 value={char}
                 onChange={(e) => handleChange(e.target.value, index)}
-                onKeyDown={(e) => handleKeyDown(e, index)} // ✅ Enter triggers join
+                onKeyDown={(e) => handleKeyDown(e)} // ✅ Enter triggers join
                 onPaste={handlePaste}
                 ref={(el) => { inputsRef.current[index] = el; }}
                 className="w-12 h-12 text-xl font-bold text-center bg-[#2c2c2c] border border-gray-600 rounded-xl focus:ring-2 focus:ring-yellow-400"

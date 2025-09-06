@@ -59,8 +59,12 @@ export async function refreshIfNeeded(): Promise<void> {
       Cookies.set(ACCESS_TOKEN_KEY, access_token, { secure: true, sameSite: "strict" });
       Cookies.set(REFRESH_TOKEN_KEY, refresh_token, { secure: true, sameSite: "strict" });
 
-    } catch (err: any) {
-      console.error("[tokenService] Refresh failed ❌", err.response?.data || err);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("[tokenService] Token refresh failed:", err.message);
+      }else {
+        console.error("[tokenService] Token refresh failed:", err);
+      }
       Cookies.remove(ACCESS_TOKEN_KEY);
       Cookies.remove(REFRESH_TOKEN_KEY);
       if (typeof window !== "undefined") {

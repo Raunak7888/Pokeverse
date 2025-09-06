@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
 import {
   parseUserCookie,
   parseLocalStorage,
@@ -10,7 +9,7 @@ import {
 import { useLobbyWebSocket } from "@/components/lobby/useLobbyWebSocket";
 import PlayerList from "@/components/lobby/PlayerList";
 import ChatComponent from "@/components/chatcomponent";
-import { MessagesSquare, Copy, Loader2, Play } from "lucide-react";
+import { MessagesSquare, Copy } from "lucide-react";
 import { Player, Room } from "@/utils/types";
 import { Client } from "@stomp/stompjs";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -23,12 +22,9 @@ const Lobby = () => {
   const failedProfilePics = useRef<Set<string>>(new Set());
   const [room, setRoom] = useState<Room | null>(null);
   const [userId, setUserId] = useState("");
-  const [username, setUsername] = useState("");
   const [roomId, setRoomId] = useState("000000");
   const [showChat, setShowChat] = useState(false);
-  const [starting, setStarting] = useState(false);
 
-  const router = useRouter();
   const { stompClient, isConnected } = useLobbyWebSocket(setPlayers, roomId);
 
   // Init room and players
@@ -36,7 +32,6 @@ const Lobby = () => {
     const user = parseUserCookie();
     if (user) {
       setUserId(user.id);
-      setUsername(user.name);
     }
 
     const storedRoom = parseLocalStorage("room");
@@ -58,9 +53,9 @@ const Lobby = () => {
           const data = await fetchRoomFromServer(id, userId);
           setRoom(data.room);
           setPlayers(
-            data.players.map((p: any, idx: number) => ({
-              id: p.id ?? idx,
-              userId: p.userId,
+            data.players.map((p, idx) => ({
+              id: idx,
+              userId: typeof p.userId === "string" ? Number(p.userId) : p.userId,
               name: p.name,
               profilePicUrl: p.profilePicUrl,
               score: p.score,
@@ -111,7 +106,6 @@ const Lobby = () => {
       return;
     }
 
-    setStarting(true);
     console.group("🎮 Game Start Flow");
 
     stompClient.publish({
@@ -125,7 +119,6 @@ const Lobby = () => {
         body: JSON.stringify({ action: "initiate" }),
       });
       console.groupEnd();
-      setStarting(false);
     }, 300);
   };
 

@@ -1,51 +1,35 @@
-'use client';
-import { ReactNode, useEffect } from "react";
+// src/app/layout.tsx
+import { ReactNode } from "react";
 import "./globals.css";
-import BackButton from "@/components/backbutton";
-import useTokenRefresh from "@/lib/hooks/useTokenRefresh";
+import {
+  Krona_One,
+  Outfit,
+  Aclonica,
+  Mogra,
+  Modak,
+  Lemon,
+  Piedra,
+  Poetsen_One,
+} from "next/font/google";
+
+const krona = Krona_One({ weight: "400", subsets: ["latin"], variable: "--font-krona" });
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
+const aclonica = Aclonica({ weight: "400", subsets: ["latin"], variable: "--font-aclonica" });
+const mogra = Mogra({ weight: "400", subsets: ["latin"], variable: "--font-mogra" });
+const modak = Modak({ weight: "400", subsets: ["latin"], variable: "--font-modak" });
+const lemon = Lemon({ weight: "400", subsets: ["latin"], variable: "--font-lemon" });
+const piedra = Piedra({ weight: "400", subsets: ["latin"], variable: "--font-piedra" });
+const poetsen = Poetsen_One({ weight: "400", subsets: ["latin"], variable: "--font-poetsen" });
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  // useTokenRefresh();
   return (
     <html lang="en">
-      <head>
-        {/* Google Fonts */}
-
-
-        <link
-          href="https://fonts.googleapis.com/css2?family=Piedra&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Krona+One&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Aclonica&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Mogra&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Monda:wght@400..700&display=swap"
-          rel="stylesheet"
-        />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Lemon&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Poetsen+One&display=swap" rel="stylesheet" />
-            <title>PokeVerse</title>
-          </head>
-          <body>
-            {/* <BackButton /> 👈 Always visible back button */}
-            {children}
-          </body>
-        </html>
-        );
+      {/* Apply Outfit as the default font, plus register others via CSS vars */}
+      <body
+        className={`${outfit.className} ${krona.variable} ${aclonica.variable} ${mogra.variable} ${modak.variable} ${lemon.variable} ${piedra.variable} ${poetsen.variable} bg-black text-white`}
+      >
+        {children}
+      </body>
+    </html>
+  );
 }

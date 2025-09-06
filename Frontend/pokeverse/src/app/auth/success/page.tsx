@@ -10,7 +10,7 @@ export default function AuthCallback() {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await fetch(backendUrl+"/authentication/auth/success", {
+        const res = await fetch(`${backendUrl}/authentication/auth/success`, {
           credentials: "include",
         });
 
@@ -37,7 +37,11 @@ export default function AuthCallback() {
     }
 
     fetchUser();
-  }, []);
+  }, [router]); // 👈 include router here
 
-  return <div className="text-white text-center w-screen h-screen">Logging in, please wait...</div>;
+  return (
+    <div className="text-white text-center w-screen h-screen">
+      Logging in, please wait...
+    </div>
+  );
 }

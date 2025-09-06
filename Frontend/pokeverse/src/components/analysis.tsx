@@ -48,7 +48,7 @@ const Analysis = () => {
         );
     }
 
-    function handleMenuClick(event: React.MouseEvent<HTMLButtonElement>): void {
+    function handleMenuClick(): void {
         setLoader(true);
         router.push('/quiz');
     }
@@ -57,7 +57,7 @@ const Analysis = () => {
     return (
         <div className="flex flex-col justify-center items-center h-full w-full text-white bg-[#181818]"> 
         {loader && <PikachuLoader />}
-            <div className='text-4xl font-bold my-5 font-[Krona_One] text-[#ff4035]'>
+            <div className='text-4xl font-bold my-5 font-krona text-[#ff4035]'>
               Quiz Analysis
             </div>
             <div className="bg-[#282828] h-[90%] w-[90%] rounded-4xl p-7 grid grid-cols-[2fr_8fr] grid-rows-[2fr_4fr] gap-4
@@ -79,14 +79,14 @@ const Analysis = () => {
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#383838] w-36 h-20 rounded-b-full flex flex-col items-center justify-center shadow-inner
                                          transform transition-all duration-300 ease-in-out ">
                             <div
-                                className="font-bold text-[10px] rotate-180 font-[Krona_One] tracking-widest"
+                                className="font-bold text-[10px] rotate-180 font-krona tracking-widest"
                                 style={{ color: accuracyColor }}
                             >
                                 Accuracy
                             </div>
 
                             <div
-                                className="font-bold text-xl rotate-180 font-[Aclonica]"
+                                className="font-bold text-xl rotate-180 font-aclonica"
                                 style={{ color: accuracyColor }}
                             >
                                 {quizAnalysis.accuracy.toPrecision(4)}%
@@ -107,28 +107,28 @@ const Analysis = () => {
                         {/* Total Questions Card */}
                         <div className='bg-[#585858] rounded-tl-2xl pt-1 pl-3 pr-3 border-b-2 border-lime-500 flex items-center justify-center flex-col
                                        transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
-                            <div className='font-bold text-xl text-center font-[Aclonica] text-lime-500 '>{quizAnalysis.totalQuestions || 0}</div>
-                            <div className='w-full text-xs font-[Krona_One] text-center tracking-widest text-gray-400'>Total Question</div>
+                            <div className='font-bold text-xl text-center font-aclonica text-lime-500 '>{quizAnalysis.totalQuestions || 0}</div>
+                            <div className='w-full text-xs font-krona text-center tracking-widest text-gray-400'>Total Question</div>
                         </div>
                         {/* Correct Questions Card */}
                         <div className='bg-[#585858] pt-1 pl-3 pr-3 border-b-2 border-green-500 flex items-center justify-center flex-col
                                        transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
-                            <div className='font-bold text-xl text-center font-[Aclonica] text-green-400'>{quizAnalysis.correctAnswers || 0}</div>
-                            <div className='w-full text-xs font-[Krona_One] text-center tracking-widest text-gray-400'>Correct Question</div>
+                            <div className='font-bold text-xl text-center font-aclonica text-green-400'>{quizAnalysis.correctAnswers || 0}</div>
+                            <div className='w-full text-xs font-krona text-center tracking-widest text-gray-400'>Correct Question</div>
                         </div>
                         {/* Wrong Questions Card */}
                         <div className='bg-[#585858] pt-1 pl-3 pr-3 border-b-2 border-red-500 flex items-center justify-center flex-col
                                        transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
-                            <div className='font-bold text-xl text-center font-[Aclonica] text-red-400'>{quizAnalysis.wrongAnswers || 0}</div>
-                            <div className='w-full text-xs font-[Krona_One] text-center tracking-widest text-gray-400'>Wrong Question</div>
+                            <div className='font-bold text-xl text-center font-aclonica text-red-400'>{quizAnalysis.wrongAnswers || 0}</div>
+                            <div className='w-full text-xs font-krona text-center tracking-widest text-gray-400'>Wrong Question</div>
                         </div>
                         {/* Unanswered Questions Card */}
                         <div className='bg-[#585858] rounded-tr-2xl pt-1 pl-3 pr-3 border-b-2 border-orange-500 flex items-center justify-center flex-col
                                        transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
-                            <div className='font-bold text-xl text-center font-[Aclonica] text-orange-400'>
+                            <div className='font-bold text-xl text-center font-aclonica text-orange-400'>
                                 {Math.max(0, (quizAnalysis.totalQuestions || 0) - ((quizAnalysis.correctAnswers || 0) + (quizAnalysis.wrongAnswers || 0)))}
                             </div>
-                            <div className='w-full text-xs font-[Krona_One] text-center tracking-widest text-gray-400'>Unanswered Question</div>
+                            <div className='w-full text-xs font-krona text-center tracking-widest text-gray-400'>Unanswered Question</div>
                         </div>
                     </div>
                     <div className='grid grid-cols-[2fr_1fr] gap-3'>
@@ -136,24 +136,24 @@ const Analysis = () => {
                             {/* Speed Rating Card */}
                             <div className='bg-[#585858] rounded-bl-2xl pt-1 pl-3 pr-3 border-b-2 border-blue-500 flex items-center justify-center flex-col
                                            transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
-                                <div className='font-bold text-xl text-center font-[Aclonica] text-blue-400'>{quizAnalysis.answerSpeedRating || 'N/A'}</div>
-                                <div className='w-full text-xs font-[Krona_One] text-center tracking-widest text-gray-400'>Speed Rating</div>
+                                <div className='font-bold text-xl text-center font-aclonica text-blue-400'>{quizAnalysis.answerSpeedRating || 'N/A'}</div>
+                                <div className='w-full text-xs font-krona text-center tracking-widest text-gray-400'>Speed Rating</div>
                             </div>
                             {/* Performance Rating Card */}
                             <div className='bg-[#585858] pt-1 pl-3 pr-3 border-b-2 border-purple-500 flex items-center justify-center flex-col
                                            transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
-                                <div className='font-bold text-xl text-center font-[Aclonica] text-purple-400'>{quizAnalysis.performanceRating || 'N/A'}</div>
-                                <div className='w-full text-xs font-[Krona_One] text-center tracking-widest text-gray-400'>Performance Rating</div>
+                                <div className='font-bold text-xl text-center font-aclonica text-purple-400'>{quizAnalysis.performanceRating || 'N/A'}</div>
+                                <div className='w-full text-xs font-krona text-center tracking-widest text-gray-400'>Performance Rating</div>
                             </div>
                         </div>
                         <div className='bg-[#484848] rounded-br-2xl p-2 w-full h-full'>
                             {/* Quiz Played Date Card */}
                             <div className='bg-[#585858] rounded-br-2xl w-full h-full pt-1 pl-3 pr-3 pb-1 border-b-2 border-yellow-600 flex items-center justify-center flex-col
                                            transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
-                                <div className='font-bold text-xl text-center font-[Aclonica] text-yellow-400'>
+                                <div className='font-bold text-xl text-center font-aclonica text-yellow-400'>
                                     {quizAnalysis.createdAt ? new Date(quizAnalysis.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
                                 </div>
-                                <div className='w-full text-xs font-[Krona_One] tracking-widest text-center text-gray-400'>
+                                <div className='w-full text-xs font-krona tracking-widest text-center text-gray-400'>
                                     Quiz Played Date
                                 </div>
                             </div>
@@ -167,33 +167,33 @@ const Analysis = () => {
                         {/* Total Duration Card */}
                         <div className='bg-[#585858] pt-3 pl-3 pr-3 rounded-t-2xl border-b-2 border-teal-500 flex  justify-center flex-col
                                        transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
-                            <div className='font-bold text-xl font-[Aclonica] text-teal-400'>{formatTime(quizAnalysis.totalDuration || 0)}</div>
-                            <div className='w-full text-xs font-[Krona_One] tracking-widest text-end text-gray-400'>Total Duration</div>
+                            <div className='font-bold text-xl font-aclonica text-teal-400'>{formatTime(quizAnalysis.totalDuration || 0)}</div>
+                            <div className='w-full text-xs font-krona tracking-widest text-end text-gray-400'>Total Duration</div>
                         </div>
                         {/* Average Time Per Question Card */}
                         <div className='bg-[#585858] pt-3 pl-3 pr-3 border-b-2 border-amber-500 flex  justify-center flex-col
                                        transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
-                            <div className='font-bold text-xl font-[Aclonica] text-amber-400'>{formatTime(quizAnalysis.averageTimePerQuestion || 0)}</div>
-                            <div className='w-full text-xs font-[Krona_One] tracking-widest text-end text-gray-400'>Average Time Per Question</div>
+                            <div className='font-bold text-xl font-aclonica text-amber-400'>{formatTime(quizAnalysis.averageTimePerQuestion || 0)}</div>
+                            <div className='w-full text-xs font-krona tracking-widest text-end text-gray-400'>Average Time Per Question</div>
                         </div>
                         {/* Fastest Time Card */}
                         <div className='bg-[#585858] pt-3 pl-3 pr-3 border-b-2 border-lime-600 flex  justify-center flex-col
                                        transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
-                            <div className='font-bold text-xl font-[Aclonica] text-lime-400'>{formatTime(quizAnalysis.fastestAnswerTime || 0)}</div>
-                            <div className='w-full text-xs font-[Krona_One] tracking-widest text-end text-gray-400'>Fastest Time</div>
+                            <div className='font-bold text-xl font-aclonica text-lime-400'>{formatTime(quizAnalysis.fastestAnswerTime || 0)}</div>
+                            <div className='w-full text-xs font-krona tracking-widest text-end text-gray-400'>Fastest Time</div>
                         </div>
                         {/* Slowest Time Card */}
                         <div className='bg-[#585858] pt-3 pl-3 pr-3 rounded-b-2xl border-b-2 border-red-600 flex  justify-center flex-col 
                                        transform transition-all duration-300 ease-in-out hover:scale-105 hover:bg-[#686868] '>
-                            <div className='font-bold text-xl font-[Aclonica] text-red-400'>{formatTime(quizAnalysis.slowestAnswerTime || 0)}</div>
-                            <div className='w-full text-xs font-[Krona_One] tracking-widest text-end text-gray-400'>Slowest Time</div>
+                            <div className='font-bold text-xl font-aclonica text-red-400'>{formatTime(quizAnalysis.slowestAnswerTime || 0)}</div>
+                            <div className='w-full text-xs font-krona tracking-widest text-end text-gray-400'>Slowest Time</div>
                         </div>
                     </div>
                 </div>
 
                 {/* Question Analysis Scrollable Panel */}
                 <div className="bg-[#383838] rounded-3xl p-4 h-113 grid grid-rows-[1fr_6fr]">
-                    <div className='font-bold text-xl text-center pb-3 font-[Krona_One] text-cyan-400'>Question Analysis</div>
+                    <div className='font-bold text-xl text-center pb-3 font-krona text-cyan-400'>Question Analysis</div>
                     <div className='bg-[#282828] h-full w-full p-3 rounded-2xl overflow-y-scroll custom-scrollbar'>
                         {quizAnalysis.questionAnalysis && quizAnalysis.questionAnalysis.length > 0 ? (
                             quizAnalysis.questionAnalysis.map((q, index) => (
@@ -201,11 +201,11 @@ const Analysis = () => {
                                          transform transition-all duration-300 ease-in-out hover:scale-[1.01] 
                                          ${q.correct ? 'hover:shadow-lg hover:shadow-[#2CC30A]/50' : 'hover:shadow-lg hover:shadow-[#ee4035]/50'}`}>
                                     <div className='pb-3'>
-                                        <span className='font-bold text-lg font-[Outfit] text-yellow-300'>Ques {index + 1}. </span><span className='font-bold text-lg font-[Outfit] text-white'>{q.question}</span>
+                                        <span className='font-bold text-lg font-outfit text-yellow-300'>Ques {index + 1}. </span><span className='font-bold text-lg font-outfit text-white'>{q.question}</span>
                                     </div>
                                     <div>
-                                        <span className='font-bold text-sm font-[Outfit] text-yellow-300'>Ans {index + 1}. </span>
-                                        <span className=' font-bold text-sm font-[Outfit] text-white'>
+                                        <span className='font-bold text-sm font-outfit text-yellow-300'>Ans {index + 1}. </span>
+                                        <span className=' font-bold text-sm font-outfit text-white'>
                                             <span className='bg-[#585858] ml-2 rounded-2xl p-1 pl-3 pr-0 group relative'>
                                                 Your Answer: <span className={`rounded-2xl ml-2 p-1 pl-2
                                                                 ${q.correct ? 'bg-green-600 shadow-md shadow-green-600/40' : 'bg-red-600 shadow-md shadow-red-600/40'}
@@ -221,11 +221,11 @@ const Analysis = () => {
                                         </span>
                                         <div className="inline-flex items-center justify-center w-full">
                                             <hr className="w-80 h-[3px] mt-5 relative left-14 border-0 bg-gray-600" />
-                                            <span className="px-3 font-medium mt-7 mb-2 text-xs text-gray-400 -translate-x-1/2 bg-[#484848] relative right-24 dark:text-white font-[Krona_One] ">Time Taken</span>
+                                            <span className="px-3 font-medium mt-7 mb-2 text-xs text-gray-400 -translate-x-1/2 bg-[#484848] relative right-24 dark:text-white font-krona ">Time Taken</span>
                                         </div>
                                         <div className='flex items-center mb-1 justify-center flex-row'>
                                             <Timer className="text-cyan-300" />
-                                            <div className='font-bold ml-1 mt-1 text-lg font-[Outfit] text-cyan-300'>{formatTime(q.timeTaken || 0)}</div>
+                                            <div className='font-bold ml-1 mt-1 text-lg font-outfit text-cyan-300'>{formatTime(q.timeTaken || 0)}</div>
                                         </div>
                                     </div>
                                 </div>

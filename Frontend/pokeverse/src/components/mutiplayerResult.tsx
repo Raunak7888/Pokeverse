@@ -1,15 +1,10 @@
 "use client";
 
 import React from "react";
-import { useClock } from "@/components/GameClockContext";
 
-type MultiplayerResultProps = {
-  duration: number;
-  correct?: boolean; // Optional flag to show if the answer was correct
-};
+
 
 const MultiplayerResult = ({ endTime, correct = true }: { endTime: number; correct?: boolean }) => {
-  const { elapsed } = useClock();
   const remaining = Math.max(0, endTime - Date.now());
 
   const radius = 30;
@@ -19,7 +14,7 @@ const MultiplayerResult = ({ endTime, correct = true }: { endTime: number; corre
 
 
   return (
-    <div className="bg-[#1e1e1e] flex items-center ml-9 justify-center flex-col text-white rounded-3xl p-8 w-[71vw] h-[66vh] shadow-2xl font-[Piedra] tracking-widest">
+    <div className="bg-[#1e1e1e] flex items-center ml-9 justify-center flex-col text-white rounded-3xl p-8 w-[71vw] h-[66vh] shadow-2xl font-piedra tracking-widest">
       <div
         className={`text-7xl font-extrabold mb-6 ${correct ? "text-[#2CC30A]" : "text-red-500"
           }`}

@@ -3,7 +3,7 @@ import { Client, IMessage } from "@stomp/stompjs";
 import { useRouter } from "next/navigation";
 import { useMultiplayerQuestionStore } from "@/store/multiplayerQuestionStore";
 import { useMultiplayerResultStore } from "@/store/mulitplayerResultStore";
-import { Player, WsAnswerValidationDTO } from "@/utils/types";
+import { MultiplayerQuestion, Player, WsAnswerValidationDTO } from "@/utils/types";
 import backendUrl from "../backendUrl";
 
 export const useLobbyWebSocket = (
@@ -13,7 +13,7 @@ export const useLobbyWebSocket = (
   const router = useRouter();
   const setMultiplayerQuestion = useMultiplayerQuestionStore((state) => state.setMultiplayerQuestion);
   const addResult = useMultiplayerResultStore((state) => state.addResult);
-  const currentQuestionRef = useRef<any>(null);
+  const currentQuestionRef = useRef<MultiplayerQuestion>(null);
 
   const [stompClient, setStompClient] = useState<Client | null>(null);
   const [isConnected, setIsConnected] = useState(false);

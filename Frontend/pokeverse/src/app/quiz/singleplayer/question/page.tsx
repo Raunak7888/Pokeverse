@@ -18,7 +18,7 @@ interface Question {
 
 interface Session {
   sessionId: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const QuizPage = () => {

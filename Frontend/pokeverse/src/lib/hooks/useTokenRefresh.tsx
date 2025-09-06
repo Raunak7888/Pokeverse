@@ -1,15 +1,10 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
 import backendUrl from "@/components/backendUrl";
 import { useRouter } from "next/navigation";
 
-// --------------------
-// Types
-// --------------------
 interface JwtPayload {
   sub: string;
   userId: number;
@@ -29,9 +24,6 @@ interface TokenResponse {
   refresh_token: string;
 }
 
-// --------------------
-// Hook
-// --------------------
 const useTokenRefresh = () => {
   const router = useRouter();
 
@@ -45,9 +37,6 @@ const useTokenRefresh = () => {
     Cookies.get("user") ? JSON.parse(decodeURIComponent(Cookies.get("user")!)) : null
   );
 
-  // --------------------
-  // Helper: check expiry
-  // --------------------
   const isTokenExpiringSoon = (token: string): boolean => {
     try {
       const decoded = jwtDecode<JwtPayload>(token);
@@ -55,14 +44,12 @@ const useTokenRefresh = () => {
       return decoded.exp <= currentTime || decoded.exp - currentTime < 10;
     } catch (error) {
       console.error("[useTokenRefresh] Error decoding token:", error);
-      return true; // assume expired if decoding fails
+      return true;
     }
   };
 
-  // --------------------
-  // Refresh API call
-  // --------------------
-  const refreshTokens = async () => {
+  // ✅ Wrap in useCallback so it's stable
+  const refreshTokens = useCallback(async () => {
     if (!refreshToken) {
       console.warn("[useTokenRefresh] No refresh token, redirecting to /auth");
       router.push("/auth");
@@ -80,23 +67,20 @@ const useTokenRefresh = () => {
 
       const { access_token, refresh_token } = response.data;
 
-      // Update state & cookies
       setAccessToken(access_token);
       setRefreshToken(refresh_token);
 
       Cookies.set("accessToken", access_token, {
-        expires: 1 / 864, // ~100s for dev
+        expires: 1 / 864,
         sameSite: "strict",
       });
       Cookies.set("refreshToken", refresh_token, {
-        expires: 2, // 2 days
+        expires: 2,
         sameSite: "strict",
       });
-
     } catch (error) {
       console.error("[useTokenRefresh] ❌ Refresh failed:", error);
 
-      // Clear and redirect
       setAccessToken(null);
       setRefreshToken(null);
       setUser(null);
@@ -107,21 +91,15 @@ const useTokenRefresh = () => {
 
       router.push("/auth");
     }
-  };
+  }, [refreshToken, router]); // ✅ dependencies
 
-  // --------------------
-  // On mount → check if tokens exist
-  // --------------------
   useEffect(() => {
     if (!accessToken || !refreshToken) {
       console.warn("[useTokenRefresh] Missing token(s), redirecting to /auth");
       router.push("/auth");
     }
-  }, []);
+  }, [accessToken, refreshToken, router]);
 
-  // --------------------
-  // Interval check
-  // --------------------
   useEffect(() => {
     const interval = setInterval(() => {
       if (accessToken && isTokenExpiringSoon(accessToken)) {
@@ -130,7 +108,7 @@ const useTokenRefresh = () => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [accessToken, refreshToken]);
+  }, [accessToken, refreshTokens]);
 
   return { accessToken, refreshToken, user };
 };

@@ -27,7 +27,7 @@ export const parseUserCookie = () => {
   }
 };
 
-export const normalizePlayers = (players: any[]) =>
+export const normalizePlayers = (players: Player[]) =>
   players.map((p) => ({
     userId: p.userId.toString(),
     name: p.name,

@@ -5,13 +5,13 @@ import PokeButton from "@/components/PokemonButton";
 import Leaderboard from "@/components/finalLeaderboard";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
-import { Room } from "@/utils/types";
+import { Player, Room } from "@/utils/types";
 import { useMultiplayerResultStore } from "@/store/mulitplayerResultStore";
 
 const Result = () => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [playerId, setPlayerId] = useState<number | null>(null);
-  const [room, setRoom] = useState<Room | null>(null);
+  const [, setRoom] = useState<Room | null>(null);
   const [score, setScore] = useState<number>(0);
   const [total, setTotal] = useState<number>(0);
 
@@ -29,7 +29,7 @@ const Result = () => {
         const { id: userId } = JSON.parse(user);
         const players = JSON.parse(rawPlayers);
 
-        const matchedPlayer = players.find((p: any) => p.userId === userId);
+        const matchedPlayer = players.find((p: Player) => p.userId === userId);
         if (matchedPlayer?.id) {
           setPlayerId(matchedPlayer.id);
         }
@@ -68,9 +68,9 @@ const Result = () => {
       {showLeaderboard ? (
         <Leaderboard />
       ) : (
-        <div className="bg-[#1e1e1e] text-white rounded-3xl p-8   shadow-2xl font-[Piedra] tracking-widest">
+        <div className="bg-[#1e1e1e] text-white rounded-3xl p-8   shadow-2xl font-piedra tracking-widest">
           <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-            <h1 className="text-4xl font-bold tracking-wide font-[Piedra]">
+            <h1 className="text-4xl font-bold tracking-wide font-piedra">
               <span className="text-[#FF3B3B]">#</span>
               <span className="underline decoration-[#FF3B3B]">
                 {String(score).padStart(2, "0")}/{String(total).padStart(2, "0")}

@@ -28,7 +28,7 @@ const Question = () => {
   const [answerResult, setAnswerResult] = useState<WsAnswerValidationDTO | null>(null);
   const [playerId, setPlayerId] = useState<number | null>(null);
   const [roomId, setRoomId] = useState<number | null>(null);
-  const [players, setPlayersLocal] = useState<Player[]>([]);
+  const [, setPlayersLocal] = useState<Player[]>([]);
 
   const { stompClient } = useLobbyWebSocket(setPlayersLocal, roomId ? String(roomId) : "");
   const sendAnswer = useSendAnswerValidation(stompClient);
@@ -122,7 +122,7 @@ const Question = () => {
 
 
   /** 🔹 Option select */
-  const handleSelect = (option: string) => {
+  const handleSelect = (option: string | null) => {
     setSelectedOption(option);
   };
 
@@ -205,7 +205,6 @@ const Question = () => {
                   onSelect={handleSelect}
                   onSubmit={handleSubmit}
                   isTimebound={true}
-                  startTime={Date.now()}
                   endTime={multiplayerQuestion.questionEndTime}
                 />
               </motion.div>

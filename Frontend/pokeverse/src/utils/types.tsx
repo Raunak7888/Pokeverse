@@ -6,7 +6,36 @@ export type Player = {
   score:number;
   
 };
+export type User = {
+  id: number;
+  username: string;
+  email: string;
+  profilePicUrl: string;
+}
 
+export interface BackendQuestion {
+  id: number;
+  question: string;
+  difficulty: string;
+  region: string;
+  quizType: string;
+  options: string;
+  createdAt: string;
+}
+
+export interface MultiplayerQuestion {
+  question: {
+    id: number;
+    question: string;
+    difficulty: string;
+    region: string;
+    quizType: string;
+    options: string[];
+    createdAt: string;
+  };
+  questionNumber: number;
+  questionEndTime: number;
+}
 export type Room = {
   id: number;
   name: string;
@@ -18,6 +47,10 @@ export type Room = {
   currentRound: number;
 };
 
+export type MultiplayerResultProps = {
+  duration: number;
+  correct?: boolean; // Optional flag to show if the answer was correct
+};
 
 export interface WsAnswerValidationDTO {
   userId: number;
@@ -77,3 +110,25 @@ export interface QuizAnalysis {
     createdAt: string; 
     questionAnalysis: QuestionAnalysis[];
 };
+
+export interface QuestionComponentProps {
+  questionNumber: number;
+  questionText: string;
+  optionsText: {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+  };
+  selectedOption: string | null;
+  onSelect: (option: string | null) => void;
+  onSubmit: () => void;
+  isTimebound?: boolean;
+  endTime?: number;
+}
+
+export interface CompletedResultProps {
+  score: string;
+  total: string;
+  sessionId?: string;
+}

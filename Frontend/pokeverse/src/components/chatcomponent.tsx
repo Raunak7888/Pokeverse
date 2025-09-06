@@ -80,7 +80,7 @@ const ChatComponent: React.FC<ChatProps> = ({ stompClient }) => {
   };
 
   return (
-    <div className="max-w-lg mx-auto bg-[#1e1e1e] h-120 p-4 rounded-3xl shadow-lg font-[Aclonica]">
+    <div className="max-w-lg mx-auto bg-[#1e1e1e] h-120 p-4 rounded-3xl shadow-lg font-aclonica">
       <div
         className="bg-[#1a1a1a] p-4 h-100 overflow-y-auto leaderboard-scroll rounded-t-3xl border border-gray-700 mb-2 space-y-2"
         style={{

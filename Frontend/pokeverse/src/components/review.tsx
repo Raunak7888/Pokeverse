@@ -13,25 +13,25 @@ interface ReviewProps {
 }
 
 // A simple component to inject global styles for the custom scrollbar
-const CustomScrollbarStyles = () => (
-  <style jsx global>{`
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #111827; /* bg-gray-900 */
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background-color: #4b5563; /* bg-gray-600 */
-      border-radius: 10px;
-      border: 2px solid #111827; /* bg-gray-900 */
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background-color: #6b7280; /* bg-gray-500 */
-    }
-  `}</style>
-);
+// const CustomScrollbarStyles = () => (
+//   <style jsx global>{`
+//     .custom-scrollbar::-webkit-scrollbar {
+//       width: 8px;
+//       height: 8px;
+//     }
+//     .custom-scrollbar::-webkit-scrollbar-track {
+//       background: #111827; /* bg-gray-900 */
+//     }
+//     .custom-scrollbar::-webkit-scrollbar-thumb {
+//       background-color: #4b5563; /* bg-gray-600 */
+//       border-radius: 10px;
+//       border: 2px solid #111827; /* bg-gray-900 */
+//     }
+//     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+//       background-color: #6b7280; /* bg-gray-500 */
+//     }
+//   `}</style>
+// );
 
 
 const Review: React.FC<ReviewProps> = ({ playerId, roomId }) => {

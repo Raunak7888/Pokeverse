@@ -4,8 +4,8 @@ import React from "react";
 import Pokeball from "@/components/pokeball";
 import OptionButton from "@/components/optionButton";
 import PokeButton from "@/components/PokemonButton";
-import { useClock } from "@/components/GameClockContext";
 import { motion } from "framer-motion";
+import { QuestionComponentProps } from "@/utils/types";
 
 const QuestionComponent = ({
   questionNumber,
@@ -16,9 +16,8 @@ const QuestionComponent = ({
   onSubmit,
   isTimebound = false,
   endTime, // absolute timestamp from server
-}: any) => {
+}: QuestionComponentProps) => {
   // ✅ Only useClock if timebound
-  const { elapsed } = isTimebound ? useClock() : { elapsed: 0 };
 
   const remaining = isTimebound && endTime ? Math.max(0, endTime - Date.now()) : 0;
 

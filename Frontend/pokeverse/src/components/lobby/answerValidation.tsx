@@ -59,7 +59,7 @@ const AnswerValidation = ({
         stompClient.deactivate();
       }
     };
-  }, [onValidationResult, addResult]);
+  }, [onValidationResult, addResult,answerData.roomId]);
 
   useEffect(() => {
     if (trigger && client?.connected) {

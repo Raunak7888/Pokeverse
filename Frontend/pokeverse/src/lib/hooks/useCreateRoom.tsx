@@ -75,9 +75,13 @@ export const useCreateRoom = () => {
       localStorage.setItem('players', JSON.stringify(jsonData.players));
       localStorage.setItem('roomId', roomData.id.toString());
       router.push('/quiz/multiplayer/lobby');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Create/join error:', err);
-      setError(err.message || 'An unexpected error occurred.');
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred.');
+      }
     } finally {
       setIsLoading(false);
     }

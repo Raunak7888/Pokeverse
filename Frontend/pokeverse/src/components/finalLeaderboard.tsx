@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { useMultiplayerResultStore } from "@/store/mulitplayerResultStore";
 import Review from "./review";
 import Cookies from "js-cookie";
+import { Player, Room } from "@/utils/types";
 
 type PlayerStats = {
   name: string;
@@ -31,7 +32,7 @@ const calculateAccuracy = (
 const LeaderBoard = () => {
   const router = useRouter();
   const results = useMultiplayerResultStore((state) => state.results);
-  const [room, setRoom] = useState<any>(null);
+  const [room, setRoom] = useState<Room | null>(null);
   const [playersStats, setPlayersStats] = useState<PlayerStats[]>([]);
   const [showReview, setShowReview] = useState(false);
   const [playerId, setPlayerId] = useState<number | null>(null);
@@ -48,7 +49,7 @@ const LeaderBoard = () => {
       const players = JSON.parse(rawPlayers);
       const userObj = JSON.parse(user);
       const currentPlayer = players.find(
-        (p: any) => p.userId === userObj.id
+        (p:Player) => p.userId === userObj.id
       );
 
       if (currentPlayer) setPlayerId(currentPlayer.id);
@@ -58,7 +59,7 @@ const LeaderBoard = () => {
 
       const statsMap = new Map<number, PlayerStats>();
 
-      players.forEach((p: any) => {
+      players.forEach((p: Player) => {
         statsMap.set(p.id, {
           name: p.name,
           userId: p.id,
@@ -105,18 +106,18 @@ const LeaderBoard = () => {
 
   if (showReview && playerId && room?.id) {
     return (
-      <div className="bg-black flex items-center justify-center px-2 sm:px-4 py-8 font-[mogra] ">
+      <div className="bg-black flex items-center justify-center px-2 sm:px-4 py-8 font-mogra ">
         <Review playerId={playerId} roomId={room.id} />
       </div>
     );
   }
 
   return (
-    <div className="bg-black flex items-center justify-center px-2 sm:px-4 py-8 font-[mogra] min-h-screen">
+    <div className="bg-black flex items-center justify-center px-2 sm:px-4 py-8 font-mogra min-h-screen">
       <div className="w-full max-w-4xl bg-[#1f1f1f] text-white rounded-3xl shadow-2xl p-4 md:p-6 flex flex-col">
 
         <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-wide font-[Piedra] text-center md:text-left">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-wide font-piedra text-center md:text-left">
             <span className="text-[#FF3B3B]">#</span>
             <span className="underline decoration-[#FF3B3B]">
               {playersStats.length > 0 ? `01/${String(playersStats.length).padStart(2, "0")}` : 'N/A'}

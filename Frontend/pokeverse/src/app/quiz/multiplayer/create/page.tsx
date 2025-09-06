@@ -60,7 +60,7 @@ const CreatePage = () => {
 
   return (
     <motion.div
-      className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-black via-[#1e1e1e] to-[#2a2a2a] text-white font-[Piedra]"
+      className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-black via-[#1e1e1e] to-[#2a2a2a] text-white font-piedra"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >

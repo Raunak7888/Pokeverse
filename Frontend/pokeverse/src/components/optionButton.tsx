@@ -11,7 +11,6 @@ interface OptionButtonProps {
 }
 
 const OptionButton: React.FC<OptionButtonProps> = ({
-  optionKey,
   text,
   imageSrc,
   selectedOption,

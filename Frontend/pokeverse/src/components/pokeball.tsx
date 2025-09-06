@@ -27,7 +27,7 @@ const Pokeball: React.FC<PokeballProps> = ({ Text, size = 200, css = "" }) => {
 
       {/* Centered Text */}
       <span
-        className={`absolute top-1/2 left-1/2 ${css} transform -translate-x-1/2 -translate-y-1/2 font-bold font-[Piedra] text-white`}
+        className={`absolute top-1/2 left-1/2 ${css} transform -translate-x-1/2 -translate-y-1/2 font-bold font-piedra text-white`}
         style={{
           fontSize: `${textSize}px`,
           textShadow: "4px 4px 10px rgba(0, 0, 0, 0.8)",

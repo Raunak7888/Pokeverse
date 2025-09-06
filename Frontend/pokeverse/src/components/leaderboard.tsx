@@ -10,7 +10,7 @@ export default function LeaderBoard() {
   // ✅ Zustand will re-render automatically when players change
   const players = useLeaderboardStore((state) => state.players);
   return (
-    <div className="leaderboard-scroll font-[Piedra] tracking-widest bg-[#1e1e1e] rounded-l-[2.5rem] p-4 max-h-[calc(100vh-7rem)] overflow-y-auto relative bottom-8 w-full sm:w-72 md:w-80 lg:w-96 xl:w-[28rem]">
+    <div className="leaderboard-scroll font-piedra tracking-widest bg-[#1e1e1e] rounded-l-[2.5rem] p-4 max-h-[calc(100vh-7rem)] overflow-y-auto relative bottom-8 w-full sm:w-72 md:w-80 lg:w-96 xl:w-[28rem]">
       {players
         .slice()
         .sort((a, b) => b.score - a.score)
@@ -29,7 +29,7 @@ export default function LeaderBoard() {
               <div className="flex items-center bg-[#2e2e2e] p-2 rounded-[2.5rem] shadow-inner flex-grow overflow-hidden">
                 <div className="flex items-center bg-[#3c3c3c] p-2 rounded-[2.5rem] shadow-inner flex-grow overflow-hidden">
                   <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#d9d9d9] mx-2 shrink-0">
-                    <img
+                    <Image
                       src={
                         player.profilePicUrl ||
                         "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png"

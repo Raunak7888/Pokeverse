@@ -5,6 +5,41 @@
   --foreground: #171717;
 }
 
+/* src/app/globals.css */
+
+.font-krona {
+  font-family: var(--font-krona);
+}
+
+.font-outfit {
+  font-family: var(--font-outfit);
+}
+
+.font-aclonica {
+  font-family: var(--font-aclonica);
+}
+
+.font-mogra {
+  font-family: var(--font-mogra);
+}
+
+.font-modak {
+  font-family: var(--font-modak);
+}
+
+.font-lemon {
+  font-family: var(--font-lemon);
+}
+
+.font-piedra {
+  font-family: var(--font-piedra);
+}
+
+.font-poetsen {
+  font-family: var(--font-poetsen);
+}
+
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

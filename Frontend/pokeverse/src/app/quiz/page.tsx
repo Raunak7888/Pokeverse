@@ -94,18 +94,18 @@ const handleSinglePlayer = useCallback(async () => {
   return (
     <div className="h-full flex flex-col justify-center items-center gap-[50px]">
       {loader && <PikachuLoader />}
-      <div className="text-5xl font-bold font-[Piedra]">PokeQuiz</div>
+      <div className="text-5xl font-bold font-piedra">PokeQuiz</div>
 
       <div className="flex flex-row items-center gap-[100px]">
         {/* Single Player Card */}
         <div className="bg-[#1e1e1e] h-[400px] w-[300px] border-0 rounded-[40px] flex flex-col justify-evenly items-center">
-          <div className="text-3xl h-[45px] w-[210px] rounded-4xl flex justify-center items-center m-[10px] font-[Piedra]">
+          <div className="text-3xl h-[45px] w-[210px] rounded-4xl flex justify-center items-center m-[10px] font-piedra">
             Single Player
           </div>
 
           {/* Form */}
           <form
-            className="flex flex-col items-center font-[Mogra]"
+            className="flex flex-col items-center font-mogra"
             onSubmit={(e) => e.preventDefault()}
           >
             <div className={inputcss}>
@@ -170,18 +170,18 @@ const handleSinglePlayer = useCallback(async () => {
 
         {/* Multiplayer Card */}
         <div className="bg-[#1e1e1e] h-[400px] w-[300px] border-0 rounded-[40px] flex flex-col justify-evenly items-center">
-          <div className="text-3xl h-[45px] w-[270px] rounded-4xl flex justify-center items-center m-[10px] font-[Piedra] relative bottom-[35px]">
+          <div className="text-3xl h-[45px] w-[270px] rounded-4xl flex justify-center items-center m-[10px] font-piedra relative bottom-[35px]">
             Play With Friends
           </div>
           <div className="flex flex-col justify-evenly items-center relative bottom-[40px]">
             <button
-              className={inputcss + " font-[Mogra]"}
+              className={inputcss + " font-mogra"}
               onClick={handleMultiplayerCreate}
             >
               Create
             </button>
             <button
-              className={inputcss + " font-[Mogra]"}
+              className={inputcss + " font-mogra"}
               onClick={handleMultiplayerJoin}
             >
               Join

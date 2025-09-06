@@ -15,9 +15,10 @@ import {
 import { motion } from "framer-motion";
 import { LogOut } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import {User } from "@/utils/types";
 
 const Navbar = () => {
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<User|null>(null);
 
   useEffect(() => {
     const rawData = Cookies.get("user");
@@ -42,7 +43,7 @@ const Navbar = () => {
   return (
     <nav className="bg-[#EE4035] tracking-widest h-16 flex items-center justify-between px-4 shadow-md">
       {/* Logo */}
-      <div className="ml-4 text-white tracking-widest text-3xl md:text-4xl font-bold font-[Piedra]">
+      <div className="ml-4 text-white tracking-widest text-3xl md:text-4xl font-bold font-piedra">
         POKEVERSE
       </div>
 
@@ -50,19 +51,19 @@ const Navbar = () => {
       <div className="flex items-center space-x-6 mr-4">
         <Link
           href="/"
-          className="text-white md:text-lg font-bold font-[Piedra] hover:underline underline-offset-4"
+          className="text-white md:text-lg font-bold font-piedra hover:underline underline-offset-4"
         >
           Home
         </Link>
         <Link
           href="/quiz"
-          className="text-white md:text-lg font-bold font-[Piedra] hover:underline underline-offset-4"
+          className="text-white md:text-lg font-bold font-piedra hover:underline underline-offset-4"
         >
           PokeQuiz
         </Link>
         <Link
           href="/about"
-          className="text-white md:text-lg font-bold font-[Piedra] hover:underline underline-offset-4"
+          className="text-white md:text-lg font-bold font-piedra hover:underline underline-offset-4"
         >
           About
         </Link>
@@ -110,7 +111,7 @@ const Navbar = () => {
 
                 {/* Name + Email */}
                 <div className="text-center">
-                  <h2 className="text-xl font-bold">{userData.name}</h2>
+                  <h2 className="text-xl font-bold">{userData.username}</h2>
                   <p className="text-sm text-gray-400">{userData.email}</p>
                 </div>
 
@@ -129,7 +130,7 @@ const Navbar = () => {
         ) : (
           <Link
             href="/auth"
-            className="text-white md:text-lg font-bold font-[Piedra] hover:underline underline-offset-4"
+            className="text-white md:text-lg font-bold font-piedra hover:underline underline-offset-4"
           >
             Log In
           </Link>

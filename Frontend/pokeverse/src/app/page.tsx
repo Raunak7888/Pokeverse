@@ -4,6 +4,7 @@ import PokeButton from "@/components/PokemonButton";
 import React, { useState } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { FaGamepad, FaGithub } from "react-icons/fa";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 const games = [
@@ -84,10 +85,10 @@ const HomePage: React.FC = () => {
 
       {/* Hero Section */}
       <header className="relative w-full h-[93vh] flex flex-col justify-center items-center text-center px-4 mt-14">
-        <h1 className="text-6xl md:text-7xl font-bold font-[Krona_One] mb-4">
+        <h1 className="text-6xl md:text-7xl font-bold font-krona mb-4">
           WELCOME TO <span className="text-red-600">POKEVERSE</span>
         </h1>
-        <p className="text-xl md:text-2xl my-8 font-[Poetsen_One]">
+        <p className="text-xl md:text-2xl my-8 font-poetsen">
           Dive into Pokemon-inspired games, quizzes, and adventures
         </p>
         <div className="flex space-x- mt-8">
@@ -102,7 +103,7 @@ const HomePage: React.FC = () => {
             onClick={() => navigate.push("/auth")}
           />
           <button className="px-6 py-3 border w-[300px] border-white text-white rounded-3xl shadow-lg hover:bg-white hover:text-black
-           transition-colors duration-300 font-[Lemon]"
+           transition-colors duration-300 font-lemon"
             onClick={() => {
               const gamesSection = document.querySelector("#games");
               if (gamesSection) {
@@ -116,7 +117,7 @@ const HomePage: React.FC = () => {
 
       {/* Our Games Carousel */}
       <section className="py-16 relative px-6 h-[85vh] w-[100vw] overflow-hidden">
-        <h2 id="games" className="text-4xl font-[Krona_One] text-center mb-28">
+        <h2 id="games" className="text-4xl font-krona text-center mb-28">
           Our Games
         </h2>
 
@@ -146,9 +147,11 @@ const HomePage: React.FC = () => {
             >
               <div className="h-48 bg-black border-10 border-[#1e1e1e] rounded-t-2xl flex items-center justify-center">
                 {game.image ? (
-                  <img
+                  <Image
                     src={game.image}
                     alt={game.title}
+                    width={400} // required
+                    height={192} // required
                     className="object-cover h-full w-full rounded-t-2xl"
                   />
                 ) : (
@@ -156,7 +159,7 @@ const HomePage: React.FC = () => {
                 )}
               </div>
               <div className="p-5 flex flex-col justify-between h-56">
-                <h3 className="text-xl font-semibold font-[Poetsen_One] mb-2">
+                <h3 className="text-xl font-semibold font-poetsen mb-2">
                   {game.title}
                 </h3>
                 <p className="text-gray-400 text-sm mb-4 font-[Modra]">{game.description}</p>
@@ -193,7 +196,7 @@ const HomePage: React.FC = () => {
       {/* Footer */}
       <footer className="bg-[#111] text-gray-400 py-4 mt-auto">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-sm font-[Poetsen_One]">
+          <p className="text-sm font-poetsen">
             © {new Date().getFullYear()} Pokeverse. All rights reserved.
           </p>
           <div className="flex space-x-6 text-lg">

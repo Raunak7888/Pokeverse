@@ -29,10 +29,10 @@ export default function Auth() {
       <div className="w-full bg-[#1f1f1f] h-full rounded-lg overflow-hidden shadow-lg">
         {/* Top Red Section */}
         <div className="bg-[#ef3f3f] h-[45%] text-center rounded-t-lg flex flex-col justify-center items-center ">
-          <h1 className="text-white tracking-extreme text-4xl md:text-5xl font-bold font-[Krona_One]">
+          <h1 className="text-white tracking-extreme text-4xl md:text-5xl font-bold font-krona">
             WELCOME TO POKEVERSE
           </h1>
-          <p className="text-white mt-10 text-xl font-medium font-[Aclonica]">
+          <p className="text-white mt-10 text-xl font-medium font-aclonica">
             Login <span className="font-bold">OR</span> Register to get started
           </p>
         </div>
@@ -55,7 +55,7 @@ export default function Auth() {
 
         {/* Bottom White Section */}
         <div className="bg-white py-6 px-4 rounded-b-lg flex items-center justify-center h-[45%]">
-          <p className="absolute top-[90%] text-sm text-black font-semibold text-center font-[Aclonica]">
+          <p className="absolute top-[90%] text-sm text-black font-semibold text-center font-aclonica">
             By continuing, you agree to the Terms & Privacy Policy.
           </p>
         </div>
