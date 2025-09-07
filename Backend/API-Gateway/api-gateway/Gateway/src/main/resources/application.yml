@@ -13,7 +13,7 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins: "http://localhost:3000"
+            allowedOrigins: ${GATEWAY_ALLOWED_ORIGINS:http://localhost:3000}
             allowedMethods:
               - GET
               - POST
@@ -126,6 +126,5 @@ ratelimit:
 # =========================
 eureka:
   instance:
-    prefer-ip-address: false
-    hostname: ${HOSTNAME}
+    prefer-ip-address: true
     instance-id: ${spring.application.name}:${server.port}

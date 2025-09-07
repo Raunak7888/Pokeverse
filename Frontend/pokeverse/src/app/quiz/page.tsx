@@ -28,68 +28,68 @@ export default function Quiz() {
     router.push("quiz/multiplayer/join");
   }, [router]);
 
-const handleSinglePlayer = useCallback(async () => {
-  const userCookie = Cookies.get("user");
-  if (!userCookie) {
-    alert("User not logged in.");
-    return;
-  }
+  const handleSinglePlayer = useCallback(async () => {
+    const userCookie = Cookies.get("user");
+    if (!userCookie) {
+      alert("User not logged in.");
+      return;
+    }
 
-  const user = JSON.parse(userCookie);
+    const user = JSON.parse(userCookie);
 
-  const difficulty = difficultyRef.current?.value;
-  const region = regionRef.current?.value;
-  const rounds = roundsRef.current?.value;
+    const difficulty = difficultyRef.current?.value;
+    const region = regionRef.current?.value;
+    const rounds = roundsRef.current?.value;
 
-  // ❗ Validate all fields are selected
-  if (
-    !difficulty ||
-    difficulty === "none" ||
-    !region ||
-    region === "none" ||
-    !rounds ||
-    rounds === "none"
-  ) {
-    alert("Please select all fields before starting the quiz.");
-    return;
-  }
+    // ❗ Validate all fields are selected
+    if (
+      !difficulty ||
+      difficulty === "none" ||
+      !region ||
+      region === "none" ||
+      !rounds ||
+      rounds === "none"
+    ) {
+      alert("Please select all fields before starting the quiz.");
+      return;
+    }
 
-  const totalQuestions = parseInt(rounds);
+    const totalQuestions = parseInt(rounds);
 
-  const body = {
-    userId: user.id,
-    difficulty,
-    region,
-    quizType: "all",
-    totalQuestions,
-    startTime: new Date().toISOString(),
-  };
+    const body = {
+      userId: user.id,
+      difficulty,
+      region,
+      quizType: "all",
+      totalQuestions,
+      startTime: new Date().toISOString(),
+    };
 
-  setLoader(true);
+    setLoader(true);
 
-  try {
-    const res = await fetch(backendUrl+"/quiz/api/sessions/create", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    try {
+      const res = await fetch(backendUrl + "/quiz/api/sessions/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
 
-    if (!res.ok) throw new Error("Failed to create session");
+      if (!res.ok) throw new Error("Failed to create session");
 
-    const data = await res.json();
+      const data = await res.json();
 
-    localStorage.setItem("session", JSON.stringify(data.session));
-    localStorage.setItem("quizQuestions", JSON.stringify(data.quizzes));
+      localStorage.setItem("session", JSON.stringify(data.session));
+      localStorage.setItem("quizQuestions", JSON.stringify(data.quizzes));
 
-    router.push(`/quiz/singleplayer/question`);
-  } catch (err) {
-    console.error("Session creation failed:", err);
-    alert("Something went wrong while starting the quiz.");
-    setLoader(false);
-  }
-}, [router]);
+      router.push(`/quiz/singleplayer/question`);
+    } catch (err) {
+      console.error("Session creation failed:", err);
+      alert("Something went wrong while starting the quiz.");
+      setLoader(false);
+    }
+  }, [router]);
 
   return (
     <div className="h-full flex flex-col justify-center items-center gap-[50px]">
@@ -189,7 +189,6 @@ const handleSinglePlayer = useCallback(async () => {
           </div>
         </div>
       </div>
-     
     </div>
   );
 }

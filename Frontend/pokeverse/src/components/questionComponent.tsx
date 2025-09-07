@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Pokeball from "@/components/pokeball";
 import OptionButton from "@/components/optionButton";
 import PokeButton from "@/components/PokemonButton";
@@ -15,21 +15,37 @@ const QuestionComponent = ({
   onSelect,
   onSubmit,
   isTimebound = false,
-  endTime, // absolute timestamp from server
+  endTime,
 }: QuestionComponentProps) => {
-  // ✅ Only useClock if timebound
+  const [now, setNow] = useState(Date.now());
 
-  const remaining = isTimebound && endTime ? Math.max(0, endTime - Date.now()) : 0;
+  // 🎥 Smooth animation with requestAnimationFrame
+  useEffect(() => {
+    if (!isTimebound || !endTime) return;
 
-  const percentage =
-    isTimebound && endTime
-      ? (remaining / (endTime - (endTime - 30_000))) * 100 // assumes 30s window
-      : 100;
+    let frameId: number;
+
+    const tick = () => {
+      setNow(Date.now());
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+
+    return () => cancelAnimationFrame(frameId);
+  }, [isTimebound, endTime]);
+
+  // ⏳ Remaining time
+  const remaining = isTimebound && endTime ? Math.max(0, endTime - now) : 0;
+
+  // ⏳ Total duration (default 30s window)
+  const totalDuration = 30_000;
+  const percentage = isTimebound && endTime ? (remaining / totalDuration) * 100 : 100;
 
   const getClockColor = () => {
-    if (percentage > 66) return "#22c55e";
-    if (percentage > 33) return "#facc15";
-    return "#ef4444";
+    if (percentage > 66) return "#22c55e"; // green
+    if (percentage > 33) return "#facc15"; // yellow
+    return "#ef4444"; // red
   };
 
   const handleOptionClick = (optionText: string) => {
@@ -46,24 +62,22 @@ const QuestionComponent = ({
   return (
     <div className="relative flex items-center justify-center p-4">
       <div
-        className="rounded-[5vh] w-[72vw] sm:w-[60vw] h-[68vh] p-3 flex items-center justify-center transition-all duration-500"
+        className="rounded-[5vh] w-[72vw] sm:w-[60vw] h-[68vh] p-3 flex items-center justify-center transition-all duration-300 ease-linear"
         style={{
           background: isTimebound
             ? `conic-gradient(${getClockColor()} ${percentage}%, transparent ${percentage}%)`
             : "none",
-
         }}
       >
-        <div className="w-full h-full flex items-center rounded-[5vh] justify-center"
+        <div
+          className="w-full h-full flex items-center rounded-[5vh] justify-center"
           style={{
             backgroundColor: isTimebound ? "#1a1a1a" : "transparent",
           }}
         >
           <div className="relative z-10 flex flex-col items-center justify-center p-10 text-white shadow-lg w-[85vw] sm:w-[65vw] overflow-hidden">
             {/* Question Header */}
-            <div className="flex items-center gap-6 bg-[#2c2c2c] p-4 w-full rounded-4xl shadow-md"
-             
-            >
+            <div className="flex items-center gap-6 bg-[#2c2c2c] p-4 w-full rounded-4xl shadow-md">
               <div className="relative flex-shrink-0">
                 <Pokeball
                   Text={String(questionNumber)}
@@ -98,10 +112,10 @@ const QuestionComponent = ({
                         key === "A"
                           ? "/croped-pikachu.png"
                           : key === "B"
-                            ? "/croped-charmander.png"
-                            : key === "C"
-                              ? "/croped-squirtle.png"
-                              : "/croped-bulbasaur.png"
+                          ? "/croped-charmander.png"
+                          : key === "C"
+                          ? "/croped-squirtle.png"
+                          : "/croped-bulbasaur.png"
                       }
                       selectedOption={selectedOption}
                       onOptionClick={() => handleOptionClick(optionText)}

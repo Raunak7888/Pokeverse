@@ -40,6 +40,8 @@ const Result = () => {
         setRoom(parsedRoom);
         setTotal(parsedRoom.maxRound || 0);
       }
+      //if websocket connection exists disconnect
+      
     } catch (error) {
       console.error("Error during initialization:", error);
     }

@@ -18,6 +18,7 @@ const CompletedResult = () => {
 
   const handleNavigation = async (type: "home" | "analysis") => {
     if (type === "home") {
+      setLoader(true);
       router.push("/quiz");
       return;
     }
@@ -29,6 +30,7 @@ const CompletedResult = () => {
         try {
           const parsed = JSON.parse(storedAnalysis);
           if (parsed?.sessionId?.toString() === sessionId.toString()) {
+            setLoader(true);
             router.push("/quiz/singleplayer/analysis");
             return;
           }

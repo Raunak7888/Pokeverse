@@ -29,7 +29,19 @@ export const useMultiplayerResultStore = create<MultiplayerResultState>((set, ge
   results: loadFromStorage(),
 
   addResult: (newResult) => {
-    const updatedResults = [...get().results, newResult];
+    const currentResults = get().results;
+
+    // Filter out any existing entry with same userId, roomId, and questionId
+    const filteredResults = currentResults.filter(
+      (r) =>
+        !(
+          r.userId === newResult.userId &&
+          r.roomId === newResult.roomId &&
+          r.questionId === newResult.questionId
+        )
+    );
+
+    const updatedResults = [...filteredResults, newResult];
 
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedResults));
@@ -45,4 +57,3 @@ export const useMultiplayerResultStore = create<MultiplayerResultState>((set, ge
     set({ results: [] });
   },
 }));
-

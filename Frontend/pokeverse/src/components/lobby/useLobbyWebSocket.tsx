@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Client, IMessage } from "@stomp/stompjs";
 import { useRouter } from "next/navigation";
 import { useMultiplayerQuestionStore } from "@/store/multiplayerQuestionStore";
@@ -13,28 +13,39 @@ export const useLobbyWebSocket = (
   const router = useRouter();
   const setMultiplayerQuestion = useMultiplayerQuestionStore((state) => state.setMultiplayerQuestion);
   const addResult = useMultiplayerResultStore((state) => state.addResult);
+
   const currentQuestionRef = useRef<MultiplayerQuestion>(null);
-
-  const [stompClient, setStompClient] = useState<Client | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-
   const callbacksRef = useRef({ setPlayers, setMultiplayerQuestion, addResult, router });
   useEffect(() => {
     callbacksRef.current = { setPlayers, setMultiplayerQuestion, addResult, router };
   }, [setPlayers, setMultiplayerQuestion, addResult, router]);
 
+  const [stompClient, setStompClient] = useState<Client | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  // Safe sendMessage function
+  const sendMessage = useCallback(
+    (destination: string, body: unknown) => {
+      if (stompClient && stompClient.connected) {
+        stompClient.publish({ destination, body: JSON.stringify(body) });
+      } else {
+        console.warn("[WS] Tried to send message but STOMP is not connected");
+      }
+    },
+    [stompClient]
+  );
+
   useEffect(() => {
     if (!roomId) return;
 
-    // remove leading zeros from roomId
     const id = roomId.replace(/^0+/, "");
+    const token = localStorage.getItem("token");
 
-    const token = localStorage.getItem("token"); // adjust if you store JWT differently
-
+    const wsProtocol = backendUrl.startsWith("https") ? "wss" : "ws";
     const client = new Client({
-      brokerURL: backendUrl.replace(/^http/, "ws") + "/quiz/ws/websocket",
+      brokerURL: backendUrl.replace(/^https?/, wsProtocol) + "/quiz/ws/websocket",
       connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
-
+      debug: (str) => console.log("[WS]", str),
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
@@ -42,8 +53,9 @@ export const useLobbyWebSocket = (
 
     client.onConnect = () => {
       setIsConnected(true);
+      console.log("[WS] Connected to STOMP");
 
-      // Subscribe to game events
+      // Subscribe to game topic
       client.subscribe(`/topic/rooms/${id}/game`, (message: IMessage) => {
         const currentCallbacks = callbacksRef.current;
 
@@ -51,7 +63,6 @@ export const useLobbyWebSocket = (
           currentCallbacks.router.push("/quiz/multiplayer/question");
           return;
         }
-
         if (message.body === "Game ended") {
           currentCallbacks.router.push("/quiz/multiplayer/result");
           return;
@@ -60,21 +71,20 @@ export const useLobbyWebSocket = (
         try {
           const msg = JSON.parse(message.body);
 
-          // Handle question message
+          // Question update
           if (msg?.question && msg?.questionNumber !== undefined) {
             if (
               currentQuestionRef.current?.questionNumber === msg.questionNumber &&
               currentQuestionRef.current?.question?.id === msg.question.id
-            ) {
-              return;
-            }
+            ) return;
+
             const copy = JSON.parse(JSON.stringify(msg));
             currentCallbacks.setMultiplayerQuestion(copy);
             currentQuestionRef.current = copy;
             return;
           }
 
-          // Handle player join message
+          // Player joined
           if (msg.userId && msg.name && !msg.question) {
             currentCallbacks.setPlayers((prev) => {
               if (prev.some((p) => p.userId === msg.userId)) return prev;
@@ -85,14 +95,14 @@ export const useLobbyWebSocket = (
             return;
           }
 
-          // Handle answer validation result
+          // Answer validation
           if (msg.correct !== undefined && msg.answer && msg.questionId && msg.userId) {
             const result: WsAnswerValidationDTO = msg;
             currentCallbacks.addResult(result);
             return;
           }
         } catch (error) {
-          console.error("WebSocket: Error parsing message body:", error, message.body);
+          console.error("[WS] Error parsing message body:", error, message.body);
         }
       });
     };
@@ -104,6 +114,7 @@ export const useLobbyWebSocket = (
 
     client.onDisconnect = () => {
       setIsConnected(false);
+      console.log("[WS] STOMP disconnected");
     };
 
     setStompClient(client);
@@ -111,9 +122,9 @@ export const useLobbyWebSocket = (
 
     return () => {
       setIsConnected(false);
-      client.deactivate();
     };
   }, [roomId]);
 
-  return { stompClient, isConnected };
+  return { stompClient, isConnected, sendMessage };
 };
+
