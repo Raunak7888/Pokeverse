@@ -20,6 +20,12 @@ const modak = Modak({ weight: "400", subsets: ["latin"], variable: "--font-modak
 const lemon = Lemon({ weight: "400", subsets: ["latin"], variable: "--font-lemon" });
 const piedra = Piedra({ weight: "400", subsets: ["latin"], variable: "--font-piedra" });
 const poetsen = Poetsen_One({ weight: "400", subsets: ["latin"], variable: "--font-poetsen" });
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "PokeVerse",
+};
+
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
