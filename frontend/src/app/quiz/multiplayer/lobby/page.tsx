@@ -39,15 +39,16 @@ export default function Lobby() {
     }
   }, [room]);
 
-  // Subscribe to room updates
   useEffect(() => {
     if (!room || !connected) return;
 
     const roomTopic = `/topic/room/${room.id}/quiz`;
+    const countdownTopic = `/topic/room/${room.id}/game/countdown`;
+    const startTopic = `/topic/room/${room.id}/game/start`;
 
-    console.log("🔔 Subscribing to room updates:", roomTopic);
+    console.log("🔔 Subscribing to room updates");
 
-    const unsubscribe = subscribe(roomTopic, (message) => {
+    const unsubscribe1 = subscribe(roomTopic, (message) => {
       try {
         const updatedRoom = JSON.parse(message.body);
         setPlayers(updatedRoom.players || []);
@@ -58,24 +59,37 @@ export default function Lobby() {
       }
     });
 
+    const unsubscribe2 = subscribe(countdownTopic, (message) => {
+      try {
+        const data = JSON.parse(message.body);
+        setCountdown(data.countdown);
+        toast.info(data.message);
+        console.log("⏰ Countdown:", data.countdown);
+      } catch (err) {
+        console.error("❌ Failed to parse countdown:", err);
+      }
+    });
+
+    const unsubscribe3 = subscribe(startTopic, (message) => {
+      try {
+        const data = JSON.parse(message.body);
+        toast.success(data.message);
+        console.log("🎮 Game started!");
+        setTimeout(() => {
+          router.push(`/quiz/multiplayer/quiz`);
+        }, 1000);
+      } catch (err) {
+        console.error("❌ Failed to parse start message:", err);
+      }
+    });
+
     return () => {
       console.log("🔕 Unsubscribing from room updates");
-      unsubscribe();
+      unsubscribe1();
+      unsubscribe2();
+      unsubscribe3();
     };
-  }, [room, connected, subscribe]);
-
-  // Countdown effect
-  useEffect(() => {
-    if (countdown === null) return;
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else {
-      toast.success("Game Started!");
-      // Navigate to game screen
-      // router.push(`/game/${room.id}`);
-    }
-  }, [countdown]);
+  }, [room, connected, subscribe, router]);
 
   const copyRoomCode = () => {
     navigator.clipboard.writeText(roomCode);
@@ -90,15 +104,9 @@ export default function Lobby() {
       return;
     }
 
-    // Send start game message
-    const success = send(`/app/room/${room?.id}/start`, {
-      roomId: room?.id,
-      hostId: userId,
-    });
+    const success = send(`/app/game/start/${room?.id}/${userId}`, {});
 
-    if (success) {
-      setCountdown(3);
-    } else {
+    if (!success) {
       toast.error("Failed to start game. Please try again.");
     }
   };

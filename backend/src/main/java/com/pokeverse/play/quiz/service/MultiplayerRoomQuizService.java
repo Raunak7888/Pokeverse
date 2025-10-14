@@ -63,23 +63,33 @@ public class MultiplayerRoomQuizService {
             return;
         }
 
-        // Start the game
         room.setStatus(Status.IN_PROGRESS);
         room.setCurrentRound(1);
         roomRepository.save(room);
 
-        // Notify all players
-        websocketMessingUtil.notifyRoom(roomId, "/game", Map.of("roomId", roomId, "message", "Game started!"));
+        startCountdownAndGame(roomId);
+    }
 
-        // Start the automated question cycle
-        startQuestionCycle(roomId);
+    private void startCountdownAndGame(Long roomId) {
+        for (int i = 3; i > 0; i--) {
+            final int countdownValue = i;
+            scheduler.schedule(() -> {
+                websocketMessingUtil.notifyRoom(roomId, "/game/countdown",
+                    Map.of("countdown", countdownValue, "message", "Game starting in " + countdownValue));
+                log.info("Countdown {} for room {}", countdownValue, roomId);
+            }, (3 - i), TimeUnit.SECONDS);
+        }
+
+        scheduler.schedule(() -> {
+            websocketMessingUtil.notifyRoom(roomId, "/game/start",
+                Map.of("message", "Game started! Get ready!"));
+            startQuestionCycle(roomId);
+        }, 3, TimeUnit.SECONDS);
     }
 
     private void startQuestionCycle(Long roomId) {
-        // Send first question immediately
-        sendNextQuestion(roomId);
+        scheduler.schedule(() -> sendNextQuestion(roomId), 0, TimeUnit.SECONDS);
 
-        // Schedule subsequent questions every 30 seconds
         ScheduledFuture<?> scheduledTask = scheduler.scheduleAtFixedRate(
                 () -> {
                     try {
@@ -138,7 +148,6 @@ public class MultiplayerRoomQuizService {
         mpQuestion = multiplayerQuestionRepository.save(mpQuestion);
         activeQuestions.put(roomId, mpQuestion);
 
-        // Send question to all players
         RoomQuestionDto questionDto = RoomQuestionDto.builder()
                 .questionId(mpQuestion.getId())
                 .question(question.getQuestion())
@@ -148,7 +157,8 @@ public class MultiplayerRoomQuizService {
                 .timeLimit(QUESTION_INTERVAL_SECONDS)
                 .build();
 
-        websocketMessingUtil.notifyRoom(roomId, "/game", questionDto);
+        websocketMessingUtil.notifyRoom(roomId, "/game/question", questionDto);
+        log.info("Question sent to room {}: Round {}/{}", roomId, room.getCurrentRound(), room.getTotalRounds());
 
         // Move to next round
         room.setCurrentRound(room.getCurrentRound() + 1);
@@ -160,17 +170,20 @@ public class MultiplayerRoomQuizService {
         MultiplayerQuestion mpQuestion = activeQuestions.get(dto.roomId());
 
         if (mpQuestion == null) {
-            return; // Question expired or invalid
+            websocketMessingUtil.sendError(dto.userId(), "Question not found or expired");
+            log.warn("Question not found for room {} - may have expired", dto.roomId());
+            return;
         }
 
         RoomPlayer player = roomPlayerRepository.findByRoomIdAndUserId(dto.roomId(), dto.userId())
                 .orElse(null);
 
         if (player == null) {
+            websocketMessingUtil.sendError(dto.userId(), "Player not found in room");
+            log.warn("Player {} not found in room {}", dto.userId(), dto.roomId());
             return;
         }
 
-        // Check if already answered this question
         boolean alreadyAnswered = multiplayerAttemptRepository
                 .existsByPlayerAndMultiplayerQuestion(player, mpQuestion);
 
@@ -179,11 +192,9 @@ public class MultiplayerRoomQuizService {
             return;
         }
 
-        // Validate answer
         Question question = mpQuestion.getQuestion();
         boolean isCorrect = question.getAnswer().equalsIgnoreCase(dto.selectedOption());
 
-        // Save attempt
         MultiplayerAttempt attempt = MultiplayerAttempt.builder()
                 .player(player)
                 .multiplayerQuestion(mpQuestion)
@@ -193,32 +204,34 @@ public class MultiplayerRoomQuizService {
 
         multiplayerAttemptRepository.save(attempt);
 
-        // Update score if correct
         if (isCorrect) {
-            player.setScore(player.getScore() + 10); // 10 points per correct answer
+            player.setScore(player.getScore() + 10);
             roomPlayerRepository.save(player);
         }
 
-        // Notify player their answer was recorded
-        websocketMessingUtil.notifyRoom(dto.userId(), "/game", Map.of(
+        websocketMessingUtil.sendToPlayer(dto.userId(), "/game/answer", Map.of(
                 "isCorrect", isCorrect,
-                "newScore", player.getScore()
+                "newScore", player.getScore(),
+                "message", isCorrect ? "Correct answer!" : "Wrong answer"
         ));
+
+        log.info("Player {} answered question {} in room {} - Correct: {}",
+                dto.userId(), mpQuestion.getId(), dto.roomId(), isCorrect);
     }
 
     private void sendRoundResults(Room room, MultiplayerQuestion question) {
-        // Get all attempts for this question
         List<MultiplayerAttempt> attempts = multiplayerAttemptRepository
                 .findAllByMultiplayerQuestion(question);
 
-        // Get current scores
         List<RoomPlayer> players = room.getPlayers();
 
-        // Send round results
         Map<String, Object> results = Map.of(
+                "type", "roundResults",
                 "roundNumber", question.getRoundNumber(),
                 "correctAnswer", question.getQuestion().getAnswer(),
+                "question", question.getQuestion().getQuestion(),
                 "players", players.stream()
+                        .sorted(Comparator.comparingInt(RoomPlayer::getScore).reversed())
                         .map(p -> Map.of(
                                 "userId", p.getUserId(),
                                 "name", p.getName(),
@@ -231,7 +244,8 @@ public class MultiplayerRoomQuizService {
                         .toList()
         );
 
-        websocketMessingUtil.notifyRoom(room.getId(), "/game", results);
+        websocketMessingUtil.notifyRoom(room.getId(), "/game/results", results);
+        log.info("Round {} results sent for room {}", question.getRoundNumber(), room.getId());
     }
 
     private void endGame(Room room) {
@@ -240,7 +254,6 @@ public class MultiplayerRoomQuizService {
 
         activeQuestions.remove(room.getId());
 
-        // Build leaderboard as a list of LeaderBoardDto
         AtomicInteger rankCounter = new AtomicInteger(1);
         List<LeaderBoardDto> leaderboard = room.getPlayers().stream()
                 .sorted(Comparator.comparingInt(RoomPlayer::getScore).reversed())
@@ -252,10 +265,16 @@ public class MultiplayerRoomQuizService {
                 ))
                 .toList();
 
-        websocketMessingUtil.notifyRoom(room.getId(), "/game", Map.of(
+        websocketMessingUtil.notifyRoom(room.getId(), "/game/end", Map.of(
+                "type", "gameEnd",
                 "message", "Game completed!",
                 "leaderboard", leaderboard
         ));
+
+        log.info("Game ended for room {}. Winner: {} with {} points",
+                room.getId(),
+                leaderboard.get(0).name(),
+                leaderboard.get(0).score());
     }
 
 
