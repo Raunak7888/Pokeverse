@@ -37,4 +37,18 @@ public class RoomPlayer {
         attempts.add(attempt);
         attempt.setPlayer(this);
     }
+
+    public int getLongestStreak() {
+        int res = 0;
+        int currentStreak = 0;
+        for (MultiplayerAttempt attempt : attempts) {
+            if (attempt.isCorrect()) {
+                currentStreak++;
+                res = Math.max(res, currentStreak);
+            } else {
+                currentStreak = 0;
+            }
+        }
+        return res;
+    }
 }

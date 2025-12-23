@@ -94,7 +94,7 @@ export default function AuthMenu({
           className={`${
             isMobile
               ? "text-md bg-primary hover:bg-foreground hover:text-primary text-foreground border-2 border-foreground"
-              : "bg-primary hover:bg-foreground hover:text-primary text-foreground border-2 border-foreground"
+              : "bg-primary hover:bg-white hover:text-primary text-white border-2 hover:border-white border-primary"
           }`}
         >
           Sign In

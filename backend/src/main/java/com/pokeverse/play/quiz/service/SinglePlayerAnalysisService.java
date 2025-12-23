@@ -123,17 +123,17 @@ public class SinglePlayerAnalysisService {
 
     private String getAnswerSpeedRating(long avgTimeMs) {
         if (avgTimeMs < 5000) return Rating.MEWTWO.name();
-        else if (avgTimeMs < 10000) return Rating.SNORLAX.name();
-        else if (avgTimeMs < 15000) return Rating.CHARIZARD.name();
-        else if (avgTimeMs < 20000) return Rating.PIKACHU.name();
+        else if (avgTimeMs < 10000) return Rating.CHARIZARD.name();
+        else if (avgTimeMs < 15000) return Rating.PIKACHU.name();
+        else if (avgTimeMs < 20000) return Rating.SNORLAX.name();
         else return Rating.CATERPIE.name();
     }
 
     private String getPerformanceRating(double accuracy) {
         if (accuracy == 100) return Rating.MEWTWO.name();
-        else if (accuracy >= 80) return Rating.SNORLAX.name();
-        else if (accuracy >= 60) return Rating.CHARIZARD.name();
-        else if (accuracy >= 40) return Rating.PIKACHU.name();
+        else if (accuracy >= 80) return Rating.CHARIZARD.name();
+        else if (accuracy >= 60) return Rating.PIKACHU.name();
+        else if (accuracy >= 40) return Rating.SNORLAX.name();
         else return Rating.CATERPIE.name();
     }
 }

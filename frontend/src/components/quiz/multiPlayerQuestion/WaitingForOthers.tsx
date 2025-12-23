@@ -1,55 +1,91 @@
 // WaitingForOthers.tsx
-
 import React from "react";
 import { motion } from "framer-motion";
-import { Users, Hourglass, CheckCircle2, XCircle, Clock } from "lucide-react";
-import { scaleIn } from "./quizData";
+import {
+    Users,
+    CheckCircle2,
+    XCircle,
+    Clock as ClockIcon,
+} from "lucide-react";
 import { Badge, Card } from "./UiComponents";
-import { Player } from "@/components/utils/types";
+import { MultiplayerPlayersInRoomDto } from "@/components/utils/types";
+import { scaleIn } from "@/components/utils/animation";
 
 export const WaitingForOthers: React.FC<{
-  timeleft: number;
-  isCorrect: boolean;
-  players: Player[];
-}> = ({ timeleft, isCorrect }) => (
-  <motion.div
-    variants={scaleIn}
-    initial="initial"
-    animate="animate"
-    exit="exit"
-    transition={{ duration: 0.3 }}
-    className="w-full max-w-md"
-  >
-    <Card>
-      <div className="flex flex-col items-center justify-center p-12">
-        <motion.div
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-        >
-          <Users className="w-16 h-16 text-primary mb-6" />
-        </motion.div>
-        
-        <h2 className="text-2xl font-semibold mb-4 text-center gap-4 flex items-center ">
-          Waiting for others... <span className="flex flex-row items-center gap-4 p-2 rounded-2xl bg-primary/50 w-20 justify-center"><Clock className=""/>{timeleft}</span>
-         
-        </h2>
+    timeleft: number;
+    isCorrect: boolean;
+    players: MultiplayerPlayersInRoomDto[];
+}> = ({ timeleft, isCorrect }) => {
+    const statusText = isCorrect ? "text-success" : "text-destructive";
 
-        <Badge variant="default">
-          {isCorrect ? (
-            <><CheckCircle2 className="w-4 h-4 mr-2" /> Correct!</>
-          ) : (
-            <><XCircle className="w-4 h-4 mr-2" /> Wrong</>
-          )}
-        </Badge>
-
+    return (
         <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-          className="mt-8"
+            variants={scaleIn}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ duration: 0.28 }}
+            className="w-full max-w-md mx-auto"
         >
-          <Hourglass className="w-10 h-10 text-primary" />
+            <Card className="overflow-hidden">
+                <div className="p-8 sm:p-10 flex flex-col items-center text-center gap-6">
+                    {/* Icon pulse */}
+                    <motion.div
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{
+                            repeat: Infinity,
+                            duration: 1.6,
+                            ease: "easeInOut",
+                        }}
+                        aria-hidden
+                    >
+                        <Users className="w-16 h-16 text-primary" />
+                    </motion.div>
+
+                    {/* Heading */}
+                    <h2 className="text-xl sm:text-2xl font-semibold leading-snug">
+                        Waiting for other players
+                    </h2>
+
+                    {/* Subtitle */}
+                    <p className="text-sm text-foreground/70 max-w-[40ch]">
+                        Everyone must finish answering before the next round
+                        begins.
+                    </p>
+
+                    {/* Timer + correctness chip */}
+                    <div className="flex items-center gap-3">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-primary/10 border border-primary/30">
+                            <ClockIcon className="w-4 h-4" aria-hidden />
+                            <span className="font-medium">{timeleft}s</span>
+                        </div>
+
+                        <Badge variant="outline">
+                            <span
+                                className={`flex items-center gap-2 ${statusText}`}
+                            >
+                                {isCorrect ? (
+                                    <>
+                                        <CheckCircle2
+                                            className="w-4 h-4"
+                                            aria-hidden
+                                        />
+                                        Correct
+                                    </>
+                                ) : (
+                                    <>
+                                        <XCircle
+                                            className="w-4 h-4"
+                                            aria-hidden
+                                        />
+                                        Wrong
+                                    </>
+                                )}
+                            </span>
+                        </Badge>
+                    </div>
+                </div>
+            </Card>
         </motion.div>
-      </div>
-    </Card>
-  </motion.div>
-);
+    );
+};

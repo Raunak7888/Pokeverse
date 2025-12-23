@@ -16,6 +16,7 @@ import { useSinglePlayerQuestionsStore } from "@/store/useSinglePlayerQuestionsS
 import { useAuthStore } from "@/store/useAuthStore";
 import { useSinglePlayerSessionStore } from "@/store/useSinglePlayerSessionStore";
 import { customToast } from "@/lib/toast";
+import { BACKEND_URL } from "../utils/backendUrl";
 
 export default function SinglePlayer() {
   const regions = ["All", "Kanto", "Johto", "Hoenn", "Sinnoh"];
@@ -44,7 +45,7 @@ export default function SinglePlayer() {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/v1/api/quiz/single-player/session/create",
+        `${BACKEND_URL}/v1/api/quiz/single-player/session/create`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

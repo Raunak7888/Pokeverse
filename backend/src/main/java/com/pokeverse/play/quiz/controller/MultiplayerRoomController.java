@@ -33,4 +33,10 @@ public class MultiplayerRoomController {
     public ResponseEntity<?> getRoom(@PathVariable Long code) {
         return roomService.getMultiplayerRoom(code);
     }
+
+    @GetMapping("/results/{code}")
+    public ResponseEntity<?> getRoomResults(@PathVariable Long code) {
+        return roomService.getMultiplayerRoomResults(code);
+    }
+
 }

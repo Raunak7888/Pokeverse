@@ -1,5 +1,7 @@
 package com.pokeverse.play.quiz.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -50,6 +52,21 @@ public class RedisCacheService {
             }
         } catch (Exception e) {
             System.err.println("[RedisCacheService] Failed to get object for key: " + key + " | Error: " + e.getMessage());
+        }
+        return Optional.empty();
+    }
+    public <T> Optional<T> get(String prefix, Long id, TypeReference<T> typeReference) {
+        String key = buildKey(prefix, id);
+        try {
+            Object value = redisTemplate.opsForValue().get(key);
+
+            if (value != null) {
+                ObjectMapper mapper = new ObjectMapper();
+                T result = mapper.convertValue(value, typeReference);
+                return Optional.of(result);
+            }
+        } catch (Exception e) {
+            System.err.println("[RedisCacheService] Failed to get object (TypeReference) for key: " + key + " | Error: " + e.getMessage());
         }
         return Optional.empty();
     }

@@ -1,11 +1,13 @@
 package com.pokeverse.play.quiz.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.pokeverse.play.model.Room;
 import com.pokeverse.play.model.RoomPlayer;
 import com.pokeverse.play.model.Status;
 import com.pokeverse.play.model.User;
 import com.pokeverse.play.quiz.dto.CreateMultiplayerRoomDto;
 import com.pokeverse.play.quiz.dto.MultiplayerRoomCreationDto;
+import com.pokeverse.play.quiz.dto.ResultDto;
 import com.pokeverse.play.quiz.mapper.RoomIdAndCodeMapper;
 import com.pokeverse.play.quiz.mapper.RoomMapper;
 import com.pokeverse.play.quiz.utils.ErrorUtil;
@@ -18,6 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +37,7 @@ public class MultiplayerRoomService {
     private final RoomIdAndCodeMapper roomIdAndCodeMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private static final String ROOM_CACHE_PREFIX = "room";
+    private static final String RESULTS_CACHE_PREFIX = "results";
 
     @Transactional
     public ResponseEntity<?> createMultiplayerRoom(CreateMultiplayerRoomDto dto) {
@@ -158,6 +164,48 @@ public class MultiplayerRoomService {
         return ResponseEntity.ok(roomDto);
     }
 
+
+    public ResponseEntity<?> getMultiplayerRoomResults(Long code) {
+        final Long roomId = roomIdAndCodeMapper.getRoomIdByCode(code);
+        if (roomId == null) {
+            return errorUtil.notFound("Multiplayer room not found for code: " + code);
+        }
+        List<ResultDto> cachedResults = redisCacheService.get(
+                RESULTS_CACHE_PREFIX,
+                roomId,
+                new TypeReference<List<ResultDto>>() {}
+        ).orElse(null);
+
+        if (cachedResults != null) {
+            return ResponseEntity.ok(cachedResults);
+        }
+        Room room = roomRepository.findById(roomId).orElse(null);
+        if (room == null) {
+            return errorUtil.notFound("Room not found in database for ID: " + roomId);
+        }
+        final int totalRounds = room.getTotalRounds();
+
+        List<ResultDto> finalResults = room.getPlayers().stream()
+                .map(p -> {
+                    double rawScore = p.getScore();
+                    double accuracy = totalRounds > 0
+                            ? (rawScore / (10.0 * totalRounds)) * 100.0
+                            : 0.0;
+                    return ResultDto.builder()
+                            .id(p.getUserId())
+                            .name(p.getName())
+                            .score(p.getScore())
+                            .accuracy(accuracy)
+                            .streak(p.getLongestStreak())
+                            .avatar(p.getAvatar())
+                            .build();
+                })
+                .sorted((r1, r2) -> Integer.compare(r2.score(), r1.score()))
+                .toList();
+        redisCacheService.set(RESULTS_CACHE_PREFIX, roomId, finalResults);
+        return ResponseEntity.ok(finalResults);
+    }
+
     private MultiplayerRoomCreationDto getRoomFromCache(Long roomId) {
         return redisCacheService.get(ROOM_CACHE_PREFIX, roomId, MultiplayerRoomCreationDto.class)
                 .orElse(null);
@@ -170,4 +218,5 @@ public class MultiplayerRoomService {
     private void invalidateCache(Long roomId) {
         redisCacheService.delete(ROOM_CACHE_PREFIX, roomId);
     }
+
 }

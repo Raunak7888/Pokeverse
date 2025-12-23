@@ -1,54 +1,113 @@
 import axios from "axios";
-import {jwtDecode} from "jwt-decode";
+import type { InternalAxiosRequestConfig } from "axios";
+import { jwtDecode } from "jwt-decode";
 import { useAuthStore } from "@/store/useAuthStore";
 import { BACKEND_URL } from "@/components/utils/backendUrl";
 
+/* --------------------------------------------------
+    Axios instance
+-------------------------------------------------- */
 const api = axios.create({
-  baseURL: BACKEND_URL,
-  withCredentials: true,
+    baseURL: BACKEND_URL,
+    withCredentials: true,
 });
 
-// Decode JWT and check expiry
-function isTokenExpiringSoon(token: string, thresholdSeconds = 10): boolean {
-  try {
-    const decoded: { exp: number } = jwtDecode(token);
-    const now = Math.floor(Date.now() / 1000);
-    return decoded.exp - now <= thresholdSeconds;
-  } catch (err) {
-    console.error("Failed to decode JWT:", err);
-    return true; // force refresh if invalid
-  }
+/* --------------------------------------------------
+    Refresh control (prevents refresh storms)
+-------------------------------------------------- */
+let isRefreshing = false;
+let refreshPromise: Promise<string> | null = null;
+
+/* --------------------------------------------------
+    Token expiry check
+-------------------------------------------------- */
+function isTokenExpiringSoon(token: string, thresholdSeconds = 15): boolean {
+    try {
+        const { exp } = jwtDecode<{ exp: number }>(token);
+        const now = Date.now() / 1000;
+        return exp - now < thresholdSeconds;
+    } catch {
+        return true;
+    }
 }
 
-// Attach accessToken and refresh proactively
-api.interceptors.request.use(async (config) => {
-  let accessToken = useAuthStore.getState().accessToken;
-  const refreshToken = useAuthStore.getState().getRefreshToken();
+/* --------------------------------------------------
+    Refresh access token
+-------------------------------------------------- */
+async function refreshAccessToken(): Promise<string> {
+    const { getRefreshToken, setAuth, clearAuth } = useAuthStore.getState();
 
-  if (accessToken && refreshToken && isTokenExpiringSoon(accessToken)) {
-    try {
-      const res = await axios.post(
-        `${BACKEND_URL}/api/auth/refresh`,
-        { refreshToken },
-        { withCredentials: true }
-      );
-      const { accessToken: newAccessToken, refreshToken: newRefreshToken, user } = res.data;
-
-      // update store and cookies
-      useAuthStore.getState().setAuth(user, newAccessToken, newRefreshToken);
-
-      accessToken = newAccessToken;
-    } catch (err) {
-      console.error("Token refresh failed:", err);
-      useAuthStore.getState().clearAuth();
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+        clearAuth();
+        throw new Error("No refresh token");
     }
-  }
 
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
-  }
+    try {
+        const res = await axios.post(
+            `${BACKEND_URL}/api/auth/refresh`,
+            { refreshToken },
+            { withCredentials: true }
+        );
 
-  return config;
-});
+        const {
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+            user,
+        } = res.data;
+
+        setAuth(user, newAccessToken, newRefreshToken);
+        return newAccessToken;
+    } catch (err) {
+        clearAuth();
+        throw err;
+    }
+}
+
+/* --------------------------------------------------
+    Request interceptor (FIXED TYPES)
+-------------------------------------------------- */
+api.interceptors.request.use(
+    async (config: InternalAxiosRequestConfig) => {
+        const authStore = useAuthStore.getState();
+        let accessToken = authStore.accessToken;
+
+        if (accessToken && isTokenExpiringSoon(accessToken)) {
+            if (!isRefreshing) {
+                isRefreshing = true;
+                refreshPromise = refreshAccessToken().finally(() => {
+                    isRefreshing = false;
+                });
+            }
+
+            try {
+                accessToken = await refreshPromise!;
+            } catch {
+                return Promise.reject("Session expired");
+            }
+        }
+
+        if (accessToken) {
+            // IMPORTANT: Axios v1 requires using set()
+            config.headers.set("Authorization", `Bearer ${accessToken}`);
+        }
+
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+/* --------------------------------------------------
+    Response interceptor
+-------------------------------------------------- */
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            useAuthStore.getState().clearAuth();
+        }
+        return Promise.reject(error);
+    }
+);
 
 export default api;

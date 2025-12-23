@@ -9,6 +9,8 @@ import com.pokeverse.play.quiz.utils.WebsocketMessingUtil;
 import com.pokeverse.play.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @RequiredArgsConstructor
 public class MultiplayerRoomQuizService {
+
+    @Autowired
+    private ApplicationContext context;
 
     private final RoomRepository roomRepository;
     private final QuestionRepository questionRepository;
@@ -67,6 +72,10 @@ public class MultiplayerRoomQuizService {
         room.setCurrentRound(1);
         roomRepository.save(room);
 
+        websocketMessingUtil.notifyRoom(roomId, "/game/info",
+            Map.of("message", "Game is starting soon!"));
+
+
         startCountdownAndGame(roomId);
     }
 
@@ -81,56 +90,58 @@ public class MultiplayerRoomQuizService {
         }
 
         scheduler.schedule(() -> {
-            websocketMessingUtil.notifyRoom(roomId, "/game/start",
+            websocketMessingUtil.notifyRoom(roomId, "/game/info",
                 Map.of("message", "Game started! Get ready!"));
             startQuestionCycle(roomId);
         }, 3, TimeUnit.SECONDS);
     }
 
     private void startQuestionCycle(Long roomId) {
-        scheduler.schedule(() -> sendNextQuestion(roomId), 0, TimeUnit.SECONDS);
+        scheduler.schedule(() -> {
+            try {
+                MultiplayerRoomQuizService bean = context.getBean(MultiplayerRoomQuizService.class);
+                bean.sendNextQuestionTransactional(roomId);
+            } catch (Exception e) {
+                log.error("Error sending question for room {}: {}", roomId, e.getMessage());
+            }
+        }, 0, TimeUnit.SECONDS);
 
-        ScheduledFuture<?> scheduledTask = scheduler.scheduleAtFixedRate(
-                () -> {
-                    try {
-                        sendNextQuestion(roomId);
-                    } catch (Exception e) {
-                        log.error("Error sending question for room {}: {}", roomId, e.getMessage());
-                    }
-                },
-                QUESTION_INTERVAL_SECONDS,
-                QUESTION_INTERVAL_SECONDS,
-                TimeUnit.SECONDS
-        );
+        ScheduledFuture<?> scheduledTask = scheduler.scheduleAtFixedRate(() -> {
+            try {
+                MultiplayerRoomQuizService bean = context.getBean(MultiplayerRoomQuizService.class);
+                bean.sendNextQuestionTransactional(roomId);
+            } catch (Exception e) {
+                log.error("Error sending question for room {}: {}", roomId, e.getMessage());
+            }
+        }, QUESTION_INTERVAL_SECONDS, QUESTION_INTERVAL_SECONDS, TimeUnit.SECONDS);
 
         roomSchedulers.put(roomId, scheduledTask);
     }
 
-    @Transactional
     public void sendNextQuestion(Long roomId) {
-        Room room = roomRepository.findById(roomId).orElse(null);
+        // Always call inside a new transaction
+        sendNextQuestionTransactional(roomId);
+    }
 
+    @Transactional
+    public void sendNextQuestionTransactional(Long roomId) {
+        Room room = roomRepository.findById(roomId).orElse(null);
         if (room == null || room.getStatus() != Status.IN_PROGRESS) {
             stopQuestionCycle(roomId);
             return;
         }
 
-        // Check if game is complete
         if (room.getCurrentRound() > room.getTotalRounds()) {
             endGame(room);
             stopQuestionCycle(roomId);
             return;
         }
 
-        // Send round results before next question (except for first round)
         if (room.getCurrentRound() > 1) {
             MultiplayerQuestion previousQuestion = activeQuestions.get(roomId);
-            if (previousQuestion != null) {
-                sendRoundResults(room, previousQuestion);
-            }
+            if (previousQuestion != null) sendRoundResults(room, previousQuestion);
         }
 
-        // Get random question
         Question question = questionRepository.findRandomQuestion();
         if (question == null) {
             websocketMessingUtil.sendError(room.getHostId(), "No questions available.");
@@ -138,14 +149,16 @@ public class MultiplayerRoomQuizService {
             return;
         }
 
-        // Create multiplayer question
+        // Force initialize lazy collections here
+        question.getOptions().size(); // loads options inside open session
+
         MultiplayerQuestion mpQuestion = MultiplayerQuestion.builder()
                 .room(room)
                 .question(question)
                 .roundNumber(room.getCurrentRound())
                 .build();
-
-        mpQuestion = multiplayerQuestionRepository.save(mpQuestion);
+    
+        multiplayerQuestionRepository.save(mpQuestion);
         activeQuestions.put(roomId, mpQuestion);
 
         RoomQuestionDto questionDto = RoomQuestionDto.builder()
@@ -160,10 +173,10 @@ public class MultiplayerRoomQuizService {
         websocketMessingUtil.notifyRoom(roomId, "/game/question", questionDto);
         log.info("Question sent to room {}: Round {}/{}", roomId, room.getCurrentRound(), room.getTotalRounds());
 
-        // Move to next round
         room.setCurrentRound(room.getCurrentRound() + 1);
         roomRepository.save(room);
     }
+
 
     @Transactional
     public void validateAnswer(AnswerValidationDto dto) {
@@ -212,6 +225,7 @@ public class MultiplayerRoomQuizService {
         websocketMessingUtil.sendToPlayer(dto.userId(), "/game/answer", Map.of(
                 "isCorrect", isCorrect,
                 "newScore", player.getScore(),
+                "correctAnswer", question.getAnswer(),
                 "message", isCorrect ? "Correct answer!" : "Wrong answer"
         ));
 
