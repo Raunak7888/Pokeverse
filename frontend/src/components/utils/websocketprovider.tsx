@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { Client, IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+import { BACKEND_URL } from "./backendUrl";
 
 interface WebSocketContextType {
     client: Client | null;
@@ -37,8 +38,7 @@ export const WebSocketProvider: React.FC<{
             return;
         }
 
-        const wsUrl =
-            process.env.NEXT_PUBLIC_WS_URL || "http://localhost:8080/ws";
+        const wsUrl = BACKEND_URL + "/ws";
 
         console.log("🔌 Initializing WebSocket connection...");
 

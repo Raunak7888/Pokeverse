@@ -17,7 +17,6 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useParams, useRouter } from "next/navigation";
 import { useMultiplayerRStore } from "@/store/useMultiplayerResult";
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const ResultLeaderboard = () => {
     const { code } = useParams<{ code: string }>();

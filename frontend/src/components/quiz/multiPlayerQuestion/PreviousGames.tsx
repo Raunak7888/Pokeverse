@@ -1,6 +1,6 @@
 import { useMultiplayerRStore } from "@/store/useMultiplayerResult";
 import { motion } from "framer-motion";
-import { ChevronDown, History, X } from "lucide-react";
+import { ChevronDown, History } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { useMemo } from "react";

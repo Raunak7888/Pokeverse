@@ -27,23 +27,15 @@ export const useMultiplayerRStore = create<MultiplayerResultState>()(
             resultsByRoom: {},
             roomOrder: [],
             loading: false,
-
             async fetchResults(roomCode, userId) {
                 const { resultsByRoom, roomOrder } = get();
-
-                // 🔒 HARD GUARD — already cached
                 if (resultsByRoom[roomCode]) return;
-
                 set({ loading: true });
-
                 const res = await api.get(
                     `/v1/api/quiz/multiplayer/room/results/${roomCode}`
                 );
-
                 const players: PlayerResult[] = res.data;
-
                 const index = players.findIndex((p) => p.id === userId);
-
                 const roomResult: RoomResult = {
                     players,
                     currentUser: index !== -1 ? players[index] : null,

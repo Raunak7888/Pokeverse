@@ -2,7 +2,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import { SignInDialog } from "@/components/navbar/signInDialog";
 import { User } from "../utils/types";
 import { BackgroundLines } from "../ui/background-lines";

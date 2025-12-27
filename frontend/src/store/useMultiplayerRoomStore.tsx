@@ -48,10 +48,10 @@ export const useMultiplayerRoomStore = create<MultiplayerRoomState>()(
 
                         return prev
                             ? {
-                                  ...prev,
-                                  ...incoming,
-                                  avatar: incoming.avatar ?? prev.avatar,
-                              }
+                                    ...prev,
+                                    ...incoming,
+                                    avatar: incoming.avatar ?? prev.avatar,
+                                }
                             : incoming;
                     });
 
@@ -67,13 +67,13 @@ export const useMultiplayerRoomStore = create<MultiplayerRoomState>()(
                 set((state) =>
                     state.room
                         ? {
-                              room: {
-                                  ...state.room,
-                                  players: state.room.players.map((p) =>
-                                      p.id === player.id ? player : p
-                                  ),
-                              },
-                          }
+                                room: {
+                                    ...state.room,
+                                    players: state.room.players.map((p) =>
+                                        p.id === player.id ? player : p
+                                    ),
+                                },
+                            }
                         : state
                 ),
 

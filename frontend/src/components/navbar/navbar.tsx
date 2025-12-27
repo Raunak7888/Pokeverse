@@ -5,14 +5,12 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { getUserData } from "./getUserData";
 import DesktopNavLinks from "./DesktopNavLinks";
 import MobileMenu from "./MobileMenu";
-import Loader from "../utils/loader";
 
 export default function Navbar() {
     const router = useRouter();
     const [menuOpen, setMenuOpen] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);
     const fetchingRef = useRef(false); // Prevent multiple API calls
-    const [loading, setLoading] = useState(false);
 
     // Use Zustand store directly
     const { user, setAuth, loadFromCookies } = useAuthStore();
@@ -137,22 +135,19 @@ export default function Navbar() {
     }, [user, menuOpen]);
 
     return (
-        <>
-            {loading && <Loader />} {/* 👈 Add this */}
-            <nav className="w-full flex items-center justify-between px-6 py-3 fixed top-0 left-0 z-50 bg-[#EE4035]">
-                <h1
-                    className="md:text-3xl text-2xl font-bold text-white font-krona tracking-wide cursor-pointer"
-                    onClick={() => router.push("/")}
-                >
-                    Pokeverse
-                </h1>
-                <DesktopNavLinks user={user} setLoading={setLoading} />
-                <MobileMenu
-                    user={user}
-                    menuOpen={menuOpen}
-                    setMenuOpen={setMenuOpen}
-                />
-            </nav>
-        </>
+        <nav className="w-full flex items-center justify-between px-6 py-3 fixed top-0 left-0 z-50 bg-[#EE4035]">
+            <h1
+                className="md:text-3xl text-2xl font-bold text-white font-krona tracking-wide cursor-pointer"
+                onClick={() => router.push("/")}
+            >
+                Pokeverse
+            </h1>
+            <DesktopNavLinks user={user} />
+            <MobileMenu
+                user={user}
+                menuOpen={menuOpen}
+                setMenuOpen={setMenuOpen}
+            />
+        </nav>
     );
 }

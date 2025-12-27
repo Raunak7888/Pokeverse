@@ -1,9 +1,9 @@
 // ResultCard.tsx
 import React from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, Clock, Zap } from "lucide-react";
+import { CheckCircle2, XCircle, Clock } from "lucide-react";
 import { QuizQuestion } from "@/components/utils/types";
-import { Button, Card } from "./UiComponents";
+import { Card } from "./UiComponents";
 import { scaleIn } from "@/components/utils/animation";
 
 /**

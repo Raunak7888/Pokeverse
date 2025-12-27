@@ -37,7 +37,6 @@ public class MultiplayerRoomQuizService {
     private final SimpMessagingTemplate messagingTemplate;
     private final ErrorUtil errorUtil;
     private final WebsocketMessingUtil websocketMessingUtil;
-    // Track active questions and schedulers per room
     private final Map<Long, MultiplayerQuestion> activeQuestions = new ConcurrentHashMap<>();
     private final Map<Long, ScheduledFuture<?>> roomSchedulers = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);

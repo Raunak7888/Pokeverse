@@ -353,7 +353,6 @@ export default function Chat() {
                                             scrollbar-thin
                                             scrollbar-thumb-foreground/60
                                             scrollbar-track-foreground/10
-
                                             hover:scrollbar-thumb-foreground/80
 
                                             [&::-webkit-scrollbar]:w-1.5
@@ -362,7 +361,8 @@ export default function Chat() {
                                             [&::-webkit-scrollbar-thumb]:rounded-full
                                             [&::-webkit-scrollbar-thumb]:bg-foreground/60
                                             hover:[&::-webkit-scrollbar-thumb]:bg-foreground/80
-                                        "   >
+                                        "
+                            >
                                 1. CENTERED SYSTEM/EMPTY MESSAGE
                                 {messages.length === 0 && (
                                     <div className="h-[250px] flex flex-col items-center justify-center text-center opacity-70 space-y-2">

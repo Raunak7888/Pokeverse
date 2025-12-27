@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { QuestionCard } from "./QuestionCard";
 import { Leaderboard } from "./Leaderboard";
 import { ResultCard } from "./ResultCard";
-import { FinalResults } from "./FinalResults";
 import {
     MultiplayerPlayersInRoomDto,
     QuizQuestion,
@@ -17,7 +16,6 @@ import { useMultiplayerRoomStore } from "@/store/useMultiplayerRoomStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { toast } from "sonner";
 import { fadeIn } from "@/components/utils/animation";
-import { set } from "date-fns";
 
 interface RoomQuestion {
     questionId: number;
@@ -158,6 +156,7 @@ export default function LiveMultiplayerQuiz() {
             unsubscribe3();
             unsubscribe4();
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [roomId, userId, subscribe, router]);
 
     // --- Timeout Logic ---

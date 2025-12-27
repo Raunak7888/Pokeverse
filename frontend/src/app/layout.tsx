@@ -62,7 +62,9 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className="overflow-x-hidden scrollbar-thin
+        <html
+            lang="en"
+            className="overflow-x-hidden scrollbar-thin
                                             scrollbar-thumb-foreground/60
                                             scrollbar-track-foreground/10
 
@@ -73,7 +75,8 @@ export default function RootLayout({
                                             [&::-webkit-scrollbar-track]:bg-foreground/10
                                             [&::-webkit-scrollbar-thumb]:rounded-full
                                             [&::-webkit-scrollbar-thumb]:bg-foreground/60
-                                            hover:[&::-webkit-scrollbar-thumb]:bg-foreground/80">
+                                            hover:[&::-webkit-scrollbar-thumb]:bg-foreground/80"
+        >
             <body
                 className={`${outfit.className} ${krona.variable} ${aclonica.variable} ${mogra.variable} ${modak.variable} ${lemon.variable} ${piedra.variable} ${poetsen.variable} antialiased dark bg-background`}
             >
