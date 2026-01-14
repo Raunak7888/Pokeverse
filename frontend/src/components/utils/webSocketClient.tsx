@@ -59,10 +59,10 @@ export const connectWebSocket = (config: WebSocketConfig): Client | null => {
     stompClient = new Client({
         webSocketFactory: () => new SockJS(wsUrl),
         connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
-        // debug: (Str) => {
-        //      Uncomment for detailed debugging
-        //      console.log("🔍 STOMP:", str);
-        // },
+        debug: (Str) => {
+            //  Uncomment for detailed debugging
+             console.log("🔍 STOMP:", Str);
+        },
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,

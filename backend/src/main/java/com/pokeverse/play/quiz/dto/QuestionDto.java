@@ -7,5 +7,5 @@ public record QuestionDto(
         String question,
         List<String> options,
         String answer,
-        String region,
+        String topic,
         String difficulty) {}

@@ -1,8 +1,7 @@
 "use client";
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { customToast } from "@/lib/toast";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -15,10 +14,25 @@ export default function Join() {
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const router = useRouter();
     const userId = useAuthStore().getUser()?.id;
-    const { setRoom , clearRoom} = useMultiplayerRoomStore();
+    const searchParams = useSearchParams();
+    const { setRoom, clearRoom } = useMultiplayerRoomStore();
 
     useEffect(() => {
-        inputRefs.current[0]?.focus();
+        const urlCode = searchParams.get("code");
+
+        if (!urlCode) {
+            inputRefs.current[0]?.focus();
+            return;
+        }
+            
+        if (!/^\d{6}$/.test(urlCode)){
+            inputRefs.current[0]?.focus();
+            return;
+        }
+        const digits = urlCode.split("");
+        setCode(digits);
+        inputRefs.current[5]?.focus();
+
     }, []);
 
     const handleChange = (index: number, value: string) => {
@@ -124,7 +138,7 @@ export default function Join() {
     const isCodeComplete = code.every((digit) => digit !== "");
 
     return (
-        <div className="w-screen h-screen flex items-center md:scale-85 justify-center bg-background">
+        <div className="w-screen h-screen flex items-center  justify-center bg-background">
             <div className="w-full max-w-md py-20  border-2 border-foreground/20  rounded-2xl px-6">
                 <div className="text-center mb-12">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">

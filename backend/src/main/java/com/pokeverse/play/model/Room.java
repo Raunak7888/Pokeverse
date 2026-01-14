@@ -24,6 +24,7 @@ public class Room {
     private String name;
     private int totalRounds;
     private int maxPlayers;
+    private String topic;
     private int currentRound;
 
     @Enumerated(EnumType.STRING)

@@ -12,7 +12,7 @@ interface MultiplayerRoomState {
     setRoom: (room: MultiplayerRoomCreationDto) => void;
     updateRoom: (partial: Partial<MultiplayerRoomCreationDto>) => void;
     clearRoom: () => void;
-    
+    IncrementPlayerScore: (playerId: number, incrementBy: number) => void;
     setPlayers: (players: MultiplayerPlayersInRoomDto[]) => void;
     updatePlayer: (player: MultiplayerPlayersInRoomDto) => void;
     clearPlayers: () => void;
@@ -34,6 +34,24 @@ export const useMultiplayerRoomStore = create<MultiplayerRoomState>()(
                 ),
 
             clearRoom: () => set({ room: null }),
+            IncrementPlayerScore: (playerId, incrementBy) =>
+                set((state) =>
+                    state.room
+                        ? {
+                              room: {
+                                  ...state.room,
+                                  players: state.room.players.map((p) =>
+                                      p.id === playerId
+                                          ? {
+                                                ...p,
+                                                score: incrementBy,
+                                            }
+                                          : p
+                                  ),
+                              },
+                          }
+                        : state
+                ),
 
             setPlayers: (incomingPlayers) =>
                 set((state) => {
@@ -48,10 +66,10 @@ export const useMultiplayerRoomStore = create<MultiplayerRoomState>()(
 
                         return prev
                             ? {
-                                    ...prev,
-                                    ...incoming,
-                                    avatar: incoming.avatar ?? prev.avatar,
-                                }
+                                  ...prev,
+                                  ...incoming,
+                                  avatar: incoming.avatar ?? prev.avatar,
+                              }
                             : incoming;
                     });
 
@@ -67,13 +85,13 @@ export const useMultiplayerRoomStore = create<MultiplayerRoomState>()(
                 set((state) =>
                     state.room
                         ? {
-                                room: {
-                                    ...state.room,
-                                    players: state.room.players.map((p) =>
-                                        p.id === player.id ? player : p
-                                    ),
-                                },
-                            }
+                              room: {
+                                  ...state.room,
+                                  players: state.room.players.map((p) =>
+                                      p.id === player.id ? player : p
+                                  ),
+                              },
+                          }
                         : state
                 ),
 

@@ -15,14 +15,14 @@ import { scaleIn } from "@/components/utils/animation";
  */
 export const ResultCard: React.FC<{
     isCorrect: boolean;
-    correctAnswer: string;
+    // correctAnswer: string;
     userAnswer: string;
     question: QuizQuestion;
     timeSpent: number;
     // onNext: () => void;
 }> = ({
     isCorrect,
-    correctAnswer,
+    // correctAnswer,
     userAnswer,
     question,
     timeSpent,
@@ -87,7 +87,7 @@ export const ResultCard: React.FC<{
                     </div>
 
                     {/* Answers area: responsive grid */}
-                    <div className={`grid gap-4 mb-6  ${isCorrect ? "grid-cols-1" : "grid-cols-2"}`}>
+                    <div className={`grid gap-4 mb-6  `}>
                         <Card
                             className={`p-3 sm:p-4 rounded-md border ${
                                 isCorrect ? successBg : failText
@@ -98,31 +98,12 @@ export const ResultCard: React.FC<{
                             </p>
                             <p
                                 className={`${
-                                    isCorrect ? successText : "text-foreground"
+                                    isCorrect ? successText : "text-primary"
                                 } font-medium break-words`}
                             >
                                 {userAnswer || "—"}
                             </p>
                         </Card>
-
-                        {/* show correct answer only when incorrect; on wide screens it sits next to user answer */}
-                        {!isCorrect ? (
-                            <Card
-                                className={`p-3 sm:p-4 rounded-md border ${neutralBg}`}
-                            >
-                                <p className="text-xs text-foreground/70 mb-1">
-                                    Correct answer
-                                </p>
-                                <p
-                                    className={`${"text-green-600"} font-medium break-words`}
-                                >
-                                    {correctAnswer}
-                                </p>
-                            </Card>
-                        ) : (
-                            // keep an empty placeholder on small screens for consistent height if desired
-                            <div className="hidden sm:block" />
-                        )}
                     </div>
 
                     {/* meta row */}
@@ -155,12 +136,12 @@ export const ResultCard: React.FC<{
                 </div>
             </Card>
 
-            {/* live region for screenreaders describing result */}
+            {/* live region for screenreaders describing result
             <div className="sr-only" role="status" aria-live="polite">
                 {isCorrect
                     ? "You answered correctly."
                     : `Incorrect. Correct answer is: ${correctAnswer}`}
-            </div>
+            </div> */}
         </motion.div>
     );
 };

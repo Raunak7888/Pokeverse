@@ -22,8 +22,8 @@ public class Question {
     private String question;
 
     private String answer;
-    private String region;
     private String difficulty;
+    private String topic;
 
     @Builder.Default
     @ElementCollection

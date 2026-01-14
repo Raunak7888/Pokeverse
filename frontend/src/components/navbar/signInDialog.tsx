@@ -2,12 +2,23 @@
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FcGoogle } from "react-icons/fc";
 import { Button } from "@/components/ui/button";
+import React from "react";
+import Cookies from "js-cookie";
 import { BACKEND_URL } from "../utils/backendUrl";
 
 export const SignInDialog = () => {
     const handleGoogleLogin = () => {
+        const redirectFrom = window.location.pathname;
+        Cookies.set("redirectFrom", redirectFrom, { expires: 1 });
         window.location.href = `${BACKEND_URL}/oauth2/authorization/google`;
     };
+    
+    // const handleGoogleLogin = () => {
+    //     const redirectFrom = window.location.pathname;
+    //     window.location.href = `${BACKEND_URL}/oauth2/authorization/google?state=${encodeURIComponent(
+    //         redirectFrom
+    //     )}`;
+    // };
 
     return (
         <DialogHeader className="flex flex-col items-center px-4 sm:px-6 md:px-8 py-6 space-y-4">

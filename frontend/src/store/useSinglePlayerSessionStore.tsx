@@ -7,7 +7,6 @@ export type Session = {
     sessionId: number | null;
     userId: number | null;
     difficulty: string | null;
-    region: string | null;
     rounds: number;
 };
 
@@ -30,7 +29,6 @@ export const useSinglePlayerSessionStore = create<SinglePlayerSessionState>()(
                         sessionId: null,
                         userId: null,
                         difficulty: null,
-                        region: null,
                         rounds: 0,
                     },
                 }),

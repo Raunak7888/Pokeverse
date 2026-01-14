@@ -1,10 +1,15 @@
 "use client";
 
-import { Around } from "@theme-toggles/react";
 import * as React from "react";
+import { Button } from "@/components/ui/button";
+import { Moon, Sun } from "lucide-react";
 
 export function ThemeToggle() {
-    const [isToggled, setIsToggled] = React.useState(true);
+    const [mounted, setMounted] = React.useState(false);
+    const [isToggled, setIsToggled] = React.useState(true); 
+    React.useEffect(() => {
+        setMounted(true); // <-- Marks the component as hydrated/mounted
+    }, []);
 
     React.useEffect(() => {
         if (isToggled) {
@@ -14,12 +19,16 @@ export function ThemeToggle() {
         }
     }, [isToggled]);
 
+    if (!mounted) {
+        return null;
+    }
+
     return (
-        <Around
-            duration={750}
-            placeholder={<div className="w-8 h-8 rounded-full bg-gray-300" />}
-            className="scale-180"
-            onToggle={() => setIsToggled(!isToggled)}
-        />
+        <Button
+            className="rounded-full text-white bg-primary shadow-none scale-[1.75] w-7 h-7 m-1 z-5"
+            onClick={() => setIsToggled(!isToggled)}
+        >
+            {isToggled ? <Sun fill="white" /> : <Moon fill="white" />}
+        </Button>
     );
 }

@@ -105,7 +105,7 @@ public class SinglePlayerAnalysisService {
                 .userId(session.getUserId())
                 .quizType("SINGLE_PLAYER")
                 .difficulty(session.getDifficulty())
-                .region(session.getRegion())
+                .topic(session.getAttempts().getFirst().getQuestion().getTopic())
                 .totalQuestions(totalQuestions)
                 .correctAnswers(correctAnswers)
                 .wrongAnswers(wrongAnswers)

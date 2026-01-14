@@ -18,9 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -39,96 +37,91 @@ public class SinglePlayerSessionService {
     private final ErrorUtil errorUtil;
 
     public ResponseEntity<?> createSinglePlayerSession(SinglePlayerSessionCreateDto dto) {
-        log.debug("Creating single-player session: userId={}, region='{}', difficulty='{}', rounds={}",
-                dto.userId(), dto.region(), dto.difficulty(), dto.rounds());
 
         if (dto.userId() == null) {
-            log.debug("User ID missing in session creation request");
             return errorUtil.badRequest("User ID is required");
         }
         if (dto.rounds() <= 0) {
-            log.debug("Invalid rounds: {}", dto.rounds());
             return errorUtil.badRequest("Rounds must be greater than 0");
         }
 
-        List<Question> questionsList;
+        String difficulty = (dto.difficulty().equals("all") || dto.difficulty().isBlank()) ? null : dto.difficulty();
+        String topic = (dto.topic().equals( "all") || dto.topic().isBlank()) ? null : dto.topic();
 
-        if (!dto.region().isEmpty() && !dto.difficulty().isEmpty()) {
-            log.debug("Fetching questions by region and difficulty");
-            questionsList = questionRepository.findByRegionAndDifficulty(dto.region(), dto.difficulty(), dto.rounds());
-        } else if (!dto.region().isEmpty()) {
-            log.debug("Fetching questions by region only");
-            questionsList = questionRepository.findByRegion(dto.region(), dto.rounds());
-        } else if (!dto.difficulty().isEmpty()) {
-            log.debug("Fetching questions by difficulty only");
-            questionsList = questionRepository.findByDifficulty(dto.difficulty(), dto.rounds());
-        } else {
-            log.debug("Fetching questions without filters");
-            questionsList = questionRepository.findAllLimit(dto.rounds());
+
+        List<Question> fetched = questionRepository.findByFilters(
+                difficulty,
+                topic,
+                dto.rounds() * 2
+        );
+
+        // 1️⃣ Deduplicate by question ID
+        Map<Long, Question> uniqueMap = new LinkedHashMap<>();
+        for (Question q : fetched) {
+            uniqueMap.putIfAbsent(q.getId(), q);
         }
 
-        if (questionsList.isEmpty()) {
-            log.debug("No questions found for region='{}', difficulty='{}'", dto.region(), dto.difficulty());
-            return errorUtil.notFound("Could not find enough questions for the specified region and difficulty.");
+        List<Question> uniqueQuestions = new ArrayList<>(uniqueMap.values());
+
+        // 2️⃣ Shuffle (Fisher–Yates via JDK)
+        Collections.shuffle(uniqueQuestions);
+
+        // 3️⃣ Enforce invariant
+        if (uniqueQuestions.size() < dto.rounds()) {
+            return errorUtil.notFound("Could not find enough unique questions.");
         }
 
-        log.debug("Found {} questions for new session", questionsList.size());
+        List<Question> selected = uniqueQuestions.subList(0, dto.rounds());
 
+        // 4️⃣ Build session
         SinglePlayerSession session = SinglePlayerSession.builder()
                 .userId(dto.userId())
                 .difficulty(dto.difficulty())
-                .region(dto.region())
-                .rounds(questionsList.size())
+                .rounds(dto.rounds())
                 .currentRound(1)
                 .status(Status.IN_PROGRESS)
-                .completedAt(null)
+                .startedAt(Instant.now())
                 .build();
 
-        List<QuestionWithOutAnswerDto> questions = IntStream.range(0, questionsList.size())
-                .mapToObj(index -> {
-                    Question q = questionsList.get(index);
-                    log.debug("Mapping question [{}]: {}", index + 1, q.getQuestion());
+        List<QuestionWithOutAnswerDto> questions = new ArrayList<>();
 
-                    SinglePlayerAttempts attempt = SinglePlayerAttempts.builder()
+        int order = 1;
+        for (Question q : selected) {
+
+            session.getAttempts().add(
+                    SinglePlayerAttempts.builder()
                             .session(session)
                             .question(q)
                             .isCorrect(false)
                             .selectedAnswer(null)
-                            .build();
-                    session.getAttempts().add(attempt);
+                            .build()
+            );
 
-                    return new QuestionWithOutAnswerDto(
-                            q.getId(),
-                            index + 1,
-                            q.getQuestion(),
-                            q.getOptions()
-                    );
-                })
-                .collect(Collectors.toList());
-
-        session.setStartedAt(Instant.now());
-        log.debug("Saving session for userId={} with {} rounds", session.getUserId(), session.getRounds());
+            questions.add(new QuestionWithOutAnswerDto(
+                    q.getId(),
+                    order++,
+                    q.getQuestion(),
+                    q.getOptions()
+            ));
+        }
 
         SinglePlayerSession savedSession = singlePlayerSessionRepository.save(session);
-        log.debug("Session saved successfully with ID {}", savedSession.getId());
-
-        SinglePlayerSessionResponseDto sessionResponseDto = new SinglePlayerSessionResponseDto(
-                savedSession.getId(),
-                savedSession.getUserId(),
-                savedSession.getRegion(),
-                savedSession.getDifficulty(),
-                savedSession.getRounds()
-        );
-        log.debug("SinglePlayerSessionResponseDto is created");
-        SinglePlayerSessionDto sessionDto = new SinglePlayerSessionDto(sessionResponseDto, questions);
-        log.debug("SinglePlayerSessionDto is created");
 
         redisCacheService.set(SESSION_CACHE, savedSession.getId(), savedSession);
 
-
-        log.debug("Session cached under key '{}:{}'", SESSION_CACHE, savedSession.getId());
-        return ResponseEntity.ok(sessionDto);
+        return ResponseEntity.ok(
+                new SinglePlayerSessionDto(
+                        new SinglePlayerSessionResponseDto(
+                                savedSession.getId(),
+                                savedSession.getUserId(),
+                                savedSession.getDifficulty(),
+                                savedSession.getRounds()
+                        ),
+                        questions
+                )
+        );
     }
+
 
     public ResponseEntity<?> getSinglePlayerSession(Long id) {
         log.debug("Fetching single-player session by ID {}", id);

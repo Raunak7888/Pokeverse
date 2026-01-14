@@ -49,12 +49,16 @@ export default function LiveMultiplayerQuiz() {
     const [userAnswer, setUserAnswer] = useState<string | null>(null);
     const [isCorrect, setIsCorrect] = useState(false);
     const [timeSpent, setTimeSpent] = useState(0);
-    const [correctAnswer, setCorrectAnswer] = useState<string>("");
+    // const [correctAnswer, setCorrectAnswer] = useState<string>("");
+    const playerId = useMultiplayerRoomStore(
+        (state) => state.room?.players.find(p => p.userId === userId)?.id
+    );
     // Store accessors
     const players = useMultiplayerRoomStore(
         (state) => state.room?.players ?? []
     );
     const setPlayers = useMultiplayerRoomStore((state) => state.setPlayers);
+    const increasePlayerScore = useMultiplayerRoomStore((state) => state.IncrementPlayerScore);
     const roomId = room?.id || "";
 
     // --- WebSocket Subscriptions Effect ---
@@ -66,8 +70,8 @@ export default function LiveMultiplayerQuiz() {
         }
 
         const questionTopic = `/topic/room/${room.id}/game/question`;
-        const answerTopic = `/topic/player/${userId}/game/answer`;
-        const resultsTopic = `/topic/room/${room.id}/game/results`;
+        const answerTopic = `/topic/player/${room.id}/game/answer`;
+        // const resultsTopic = `/topic/room/${room.id}/game/results`;
         const endTopic = `/topic/room/${room.id}/game/end`;
 
         // 1. New Question Handler
@@ -81,7 +85,7 @@ export default function LiveMultiplayerQuiz() {
                 setTimeLeft(question.timeLimit);
                 setUserAnswer(null);
                 setIsCorrect(false);
-                setCorrectAnswer("");
+                // setCorrectAnswer("");
                 setGameState(QuizState.QUESTION); // <--- ENSURING QUESTION SCREEN IS SHOWN
 
                 // toast.info(
@@ -97,33 +101,39 @@ export default function LiveMultiplayerQuiz() {
             try {
                 const data = JSON.parse(message.body);
                 console.log("✅ Answer response:", data);
-                // Update correctness state, but let ResultCard handle the visual feedback
-                setIsCorrect(data.isCorrect);
-                setCorrectAnswer(data.correctAnswer);
-                // Removed: toast logic
+                if (data.playerId == playerId){
+                    setIsCorrect(data.isCorrect);
+                }
+                console.log("Player ID:", data.playerId, "User ID:", userId);
+                console.log("Data is correct:", data.isCorrect);
+                if (data.isCorrect) {
+                    increasePlayerScore(data.playerId, data.score);
+                }
+                
+                // setCorrectAnswer(data.correctAnswer);
             } catch (err) {
                 console.error("❌ Failed to parse answer:", err);
             }
         });
 
-        // 3. Round Results Handler (Update scores, remain in RESULT state)
-        const unsubscribe3 = subscribe(resultsTopic, (message) => {
-            const data = JSON.parse(message.body);
-            console.log("📊 Round results:", data);
-            setCorrectAnswer(data.correctAnswer);
+        // // 3. Round Results Handler (Update scores, remain in RESULT state)
+        // const unsubscribe3 = subscribe(resultsTopic, (message) => {
+        //     const data = JSON.parse(message.body);
+        //     console.log("📊 Round results:", data);
+        //     setCorrectAnswer(data.correctAnswer);
 
-            setPlayers(
-                data.players.map((p: MultiplayerPlayersInRoomDto) => ({
-                    id: p.userId,
-                    name: p.name,
-                    score: p.score,
-                    avatar: p.avatar,
-                    userId: p.userId,
-                }))
-            );
+        //     setPlayers(
+        //         data.players.map((p: MultiplayerPlayersInRoomDto) => ({
+        //             id: p.userId,
+        //             name: p.name,
+        //             score: p.score,
+        //             avatar: p.avatar,
+        //             userId: p.userId,
+        //         }))
+        //     );
 
-            // Stay in RESULT state until the next QUESTION message arrives
-        });
+        //     // Stay in RESULT state until the next QUESTION message arrives
+        // });
 
         // 4. Game End Handler
         const unsubscribe4 = subscribe(endTopic, (message) => {
@@ -153,7 +163,7 @@ export default function LiveMultiplayerQuiz() {
         return () => {
             unsubscribe1();
             unsubscribe2();
-            unsubscribe3();
+            // unsubscribe3();
             unsubscribe4();
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -247,7 +257,7 @@ export default function LiveMultiplayerQuiz() {
         roundNumber: currentQuestion?.roundNumber ?? 0,
         totalRounds: currentQuestion?.totalRounds ?? 0,
         options: currentQuestion?.options ?? [],
-        correctAnswer: correctAnswer,
+        // correctAnswer: correctAnswer || "N/A",
         timeLimit: currentQuestion?.timeLimit ?? 30,
     };
 
@@ -289,9 +299,9 @@ export default function LiveMultiplayerQuiz() {
                     >
                         <ResultCard
                             isCorrect={isCorrect}
-                            correctAnswer={
-                                correctAnswer || questionForCard.correctAnswer
-                            }
+                            // correctAnswer={
+                                // correctAnswer || questionForCard.correctAnswer
+                            // }
                             userAnswer={userAnswer || "No answer"}
                             question={questionForCard}
                             timeSpent={timeSpent}
@@ -302,8 +312,6 @@ export default function LiveMultiplayerQuiz() {
                 );
 
             case QuizState.FINAL_RESULTS:
-                return null;
-
             case QuizState.LOADING:
             default:
                 // If we reach here and currentQuestion is null, the early return handles the loading spinner.

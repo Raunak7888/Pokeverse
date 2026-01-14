@@ -58,6 +58,7 @@ public class MultiplayerRoomService {
                 .totalRounds(dto.rounds())
                 .maxPlayers(dto.maxPlayers())
                 .currentRound(0)
+                .topic(dto.topic())
                 .status(Status.NOT_STARTED)
                 .build();
 
@@ -187,14 +188,12 @@ public class MultiplayerRoomService {
 
         List<ResultDto> finalResults = room.getPlayers().stream()
                 .map(p -> {
-                    double rawScore = p.getScore();
-                    double accuracy = totalRounds > 0
-                            ? (rawScore / (10.0 * totalRounds)) * 100.0
-                            : 0.0;
+                    double accuracy = ((double) p.getScore() / (totalRounds * 300)) * 100;
                     return ResultDto.builder()
                             .id(p.getUserId())
                             .name(p.getName())
                             .score(p.getScore())
+                            .topic(room.getTopic())
                             .accuracy(accuracy)
                             .streak(p.getLongestStreak())
                             .avatar(p.getAvatar())
@@ -220,3 +219,5 @@ public class MultiplayerRoomService {
     }
 
 }
+
+

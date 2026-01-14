@@ -32,6 +32,7 @@ public class RoomPlayer {
     @Builder.Default
     private List<MultiplayerAttempt> attempts = new ArrayList<>();
 
+
     // Helper method
     public void addAttempt(MultiplayerAttempt attempt) {
         attempts.add(attempt);

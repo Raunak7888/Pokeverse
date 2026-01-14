@@ -19,7 +19,7 @@ public class QuizAnalysisDto {
     private Long userId;
     private String quizType;
     private String difficulty;
-    private String region;
+    private String topic;
     private int totalQuestions;
     private int correctAnswers;
     private int wrongAnswers;

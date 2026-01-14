@@ -3,14 +3,16 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Gamepad2, Users } from "lucide-react";
-import SinglePlayer from "@/components/quiz/SinglePlayer";
+import { BadgePlus, Gamepad2, Users } from "lucide-react";
 import Multiplayer from "@/components/quiz/Multiplayer";
 import MultiplayerUserHistory from "@/components/quiz/multiPlayerQuestion/PreviousGames";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/quiz/multiPlayerQuestion/UiComponents";
 
 export default function QuizPage() {
     const [mode, setMode] = useState<"single" | "multi" | "Nothing">("Nothing");
     const containerRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -30,6 +32,10 @@ export default function QuizPage() {
         return () =>
             document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    const handleSinglePlayerStart = () => {
+        router.push("/quiz/singleplayer/create");
+    };
 
     const cardVariants = {
         initial: { scale: 1, boxShadow: "0 0 0 rgba(0,0,0,0)" },
@@ -112,11 +118,10 @@ export default function QuizPage() {
                                 Test your Pokémon knowledge with customizable
                                 solo challenges.
                             </p>
-
-                            <AnimatePresence>
-                                {mode === "single" && (
+                            
+                            {mode === "single" && (
                                     <motion.div
-                                        key="single-options"
+                                        key="multi-options"
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: "auto" }}
                                         exit={{ opacity: 0, height: 0 }}
@@ -125,10 +130,15 @@ export default function QuizPage() {
                                             ease: "easeInOut",
                                         }}
                                     >
-                                        <SinglePlayer />
+                                        <Button
+                                    onClick={handleSinglePlayerStart}
+                                    className="w-full flex items-center justify-center space-x-2 bg-primary hover:bg-primary/50 text-foreground"
+                                >
+                                    <BadgePlus className="h-5 w-5" />
+                                    <span>Start</span>
+                                </Button>
                                     </motion.div>
                                 )}
-                            </AnimatePresence>
                         </CardContent>
                     </Card>
                 </motion.div>

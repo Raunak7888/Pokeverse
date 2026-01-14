@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, Crown, Users, Target } from "lucide-react";
+import { Copy, Check, Crown, Users, Target, Share } from "lucide-react";
 import { toast } from "sonner";
 import Chat from "@/components/quiz/multiPlayerQuestion/Chat";
 import { useMultiplayerRoomStore } from "@/store/useMultiplayerRoomStore";
@@ -16,6 +16,7 @@ import Image from "next/image";
 export default function Lobby() {
     const router = useRouter();
     const [copied, setCopied] = useState(false);
+    const [copiedLink, setCopiedLink] = useState(false);
 
     const userId = useAuthStore().user?.id;
     const room = useMultiplayerRoomStore((state) => state.room);
@@ -64,10 +65,7 @@ export default function Lobby() {
                 const data = JSON.parse(message.body);
                 console.log("ℹ Game Info:", data);
 
-                if (
-                    data.message === "Game is starting soon!" ||
-                    data.message === "Game started! Get ready!"
-                ) {
+                if (data.message === "Game_Starting") {
                     router.push("/quiz/multiplayer/quiz");
                 }
             } catch (err) {
@@ -97,6 +95,14 @@ export default function Lobby() {
         setCopied(true);
         toast.success("Room code copied!");
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    
+    const copyJoinLink = () => {
+        navigator.clipboard.writeText(`${window.location.origin}/quiz/multiplayer/join?code=${roomCode}`);
+        setCopiedLink(true);
+        toast.success("Room Link Url copied!");
+        setTimeout(() => setCopiedLink(false), 2000);
     };
 
     const handleStart = () => {
@@ -139,8 +145,7 @@ export default function Lobby() {
     return (
         <>
             <div
-                className="w-screen bg-background md:scale-75 md:mt-0 flex justify-center items-center p-4 mt-15"
-                style={{ height: "92vh" }}
+                className="w-screen bg-background md:scale-80 md:mt-5 xl:mt-5 xl:h-[92vh] h-[100vh] flex justify-center items-center p-4 mt-25"
             >
                 <div className="w-full h-full max-w-7xl">
                     {/* Mobile/Tablet Layout */}
@@ -186,18 +191,32 @@ export default function Lobby() {
                                 <span className="text-sm font-medium text-foreground/60">
                                     Room Code
                                 </span>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={copyRoomCode}
-                                    className="hover:bg-primary/10 transition h-8"
-                                >
-                                    {copied ? (
-                                        <Check className="h-4 w-4 text-green-500" />
-                                    ) : (
-                                        <Copy className="h-4 w-4 text-foreground" />
-                                    )}
-                                </Button>
+                                <div className="space-x-3">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={copyRoomCode}
+                                        className="hover:bg-primary/10 transition h-8"
+                                    >
+                                        {copied ? (
+                                            <Check className="h-4 w-4 text-green-500" />
+                                        ) : (
+                                            <Copy className="h-4 w-4 text-foreground" />
+                                        )}
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={copyJoinLink}
+                                        className="hover:bg-primary/10 transition h-8"
+                                    >
+                                        {copiedLink ? (
+                                            <Check className="h-4 w-4 text-green-500" />
+                                        ) : (
+                                            <Share className="h-4 w-4 text-foreground" />
+                                        )}
+                                    </Button>
+                                </div>
                             </div>
                             <div className="flex items-center justify-center gap-2">
                                 {roomCode.split("").map((digit, index) => (
@@ -401,18 +420,32 @@ export default function Lobby() {
                                     <span className="text-sm font-medium text-foreground/60">
                                         Room Code
                                     </span>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={copyRoomCode}
-                                        className="hover:bg-primary/10 transition h-8"
-                                    >
-                                        {copied ? (
-                                            <Check className="h-4 w-4 text-green-500" />
-                                        ) : (
-                                            <Copy className="h-4 w-4 text-foreground" />
-                                        )}
-                                    </Button>
+                                    <div className="space-x-3">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={copyRoomCode}
+                                            className="hover:bg-primary/10 transition h-8"
+                                        >
+                                            {copied ? (
+                                                <Check className="h-4 w-4 text-green-500" />
+                                            ) : (
+                                                <Copy className="h-4 w-4 text-foreground" />
+                                            )}
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={copyJoinLink}
+                                            className="hover:bg-primary/10 transition h-8"
+                                        >
+                                            {copiedLink ? (
+                                                <Check className="h-4 w-4 text-green-500" />
+                                            ) : (
+                                                <Share className="h-4 w-4 text-foreground" />
+                                            )}
+                                        </Button>
+                                    </div>
                                 </div>
                                 <div className="flex items-center justify-center gap-3">
                                     {roomCode.split("").map((digit, index) => (

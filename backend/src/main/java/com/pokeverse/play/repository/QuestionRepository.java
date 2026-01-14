@@ -11,19 +11,32 @@ import java.util.List;
 @Repository
 public interface QuestionRepository extends JpaRepository<Question, Long> {
 
-    @Query(value = "SELECT * FROM questions q WHERE q.region = :region ORDER BY RANDOM() LIMIT :limit", nativeQuery = true)
-    List<Question> findByRegion(@Param("region") String region, @Param("limit") int limit);
-
-    @Query(value = "SELECT * FROM questions q WHERE q.difficulty = :difficulty ORDER BY RANDOM() LIMIT :limit", nativeQuery = true)
-    List<Question> findByDifficulty(@Param("difficulty") String difficulty, @Param("limit") int limit);
-
-    @Query(value = "SELECT * FROM questions q WHERE q.region = :region AND q.difficulty = :difficulty ORDER BY RANDOM() LIMIT :limit", nativeQuery = true)
-    List<Question> findByRegionAndDifficulty(@Param("region") String region,
-                                             @Param("difficulty") String difficulty,
-                                             @Param("limit") int limit);
-
-    @Query(value = "SELECT * FROM questions q ORDER BY RANDOM() LIMIT :limit", nativeQuery = true)
-    List<Question> findAllLimit(@Param("limit") int limit);
     @Query(value = "SELECT * FROM questions ORDER BY RANDOM() LIMIT 1", nativeQuery = true)
     Question findRandomQuestion();
+
+    @Query(value = """
+        SELECT * FROM questions q
+        WHERE q.topic = :topic
+        ORDER BY RANDOM()
+        LIMIT :limit
+    """, nativeQuery = true)
+    List<Question> findByTopic(
+            @Param("topic") String topic,
+            @Param("limit") int limit
+    );
+
+
+    @Query(value = """
+        SELECT * FROM questions q
+        WHERE (:difficulty IS NULL OR q.difficulty = :difficulty)
+          AND (:topic IS NULL OR q.topic = :topic)
+        ORDER BY RANDOM()
+        LIMIT :limit
+    """, nativeQuery = true)
+    List<Question> findByFilters(
+            @Param("difficulty") String difficulty,
+            @Param("topic") String topic,
+            @Param("limit") int limit
+    );
+
 }

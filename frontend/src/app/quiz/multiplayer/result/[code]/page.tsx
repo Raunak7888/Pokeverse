@@ -130,7 +130,7 @@ const ResultLeaderboard = () => {
     };
 
     const onRestart = () => {
-        router.push("/quiz/multiplayer");
+        router.push("/quiz");
     };
 
     // Find the current user's data for the fixed summary section
@@ -307,9 +307,9 @@ const ResultLeaderboard = () => {
                                                             <span className="flex items-center gap-1">
                                                                 <Star className="w-3 h-3" />
                                                                 {
-                                                                    player.accuracy
+                                                                    player.accuracy.toFixed(2) 
                                                                 }
-                                                                % accuracy
+                                                                {" "}% accuracy
                                                             </span>
                                                             <span className="flex items-center gap-1">
                                                                 <TrendingUp className="w-3 h-3" />
@@ -393,7 +393,7 @@ const ResultLeaderboard = () => {
                                         </div>
                                         <div>
                                             <p className="text-2xl sm:text-3xl font-bold text-foreground ">
-                                                {currentUser.accuracy}%
+                                                {currentUser.accuracy.toFixed(2)}%
                                             </p>
                                             <p className="text-xs sm:text-sm text-gray-500">
                                                 Accuracy

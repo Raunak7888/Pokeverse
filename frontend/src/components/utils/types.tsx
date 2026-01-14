@@ -19,6 +19,7 @@ export type Question = {
     options: string[];
     selectedAnswer?: string | null;
     isCorrect?: boolean | null;
+    topic?: string | null;
     answer?: string | null; // backend-confirmed correct answer
 };
 
@@ -26,7 +27,6 @@ export type Session = {
     sessionId: number;
     userId: number;
     difficulty: string;
-    region: string;
     rounds: number;
 };
 
@@ -45,11 +45,11 @@ export interface QuestionAttempt {
 }
 
 export interface Analysis {
+    topic: string;
     sessionId: number;
     userId: number;
     quizType: string;
     difficulty: string;
-    region: string;
     totalQuestions: number;
     correctAnswers: number;
     wrongAnswers: number;
@@ -78,7 +78,7 @@ export interface QuizQuestion {
     options: string[];
     roundNumber: number;
     totalRounds: number;
-    correctAnswer: string;
+    // correctAnswer: string;
     timeLimit: number;
     timeLeft?: number;
 }
@@ -105,6 +105,7 @@ export interface MultiplayerRoomCreationDto {
     code: number;
     hostId: number;
     name: string;
+    topic: string;
     rounds: number;
     maxPlayers: number;
     status: Status;

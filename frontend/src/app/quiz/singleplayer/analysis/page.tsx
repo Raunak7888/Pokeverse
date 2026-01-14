@@ -15,7 +15,6 @@ import {
     Target,
     Zap,
     Calendar,
-    MapPin,
 } from "lucide-react";
 import {
     ResponsiveContainer,
@@ -118,14 +117,6 @@ export default function QuizAnalysisDashboard() {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-w-2xl mx-auto">
                         {[
                             {
-                                icon: MapPin,
-                                value:
-                                    analysis.region === ""
-                                        ? "All Region"
-                                        : analysis.region,
-                                label: "Region",
-                            },
-                            {
                                 icon: Calendar,
                                 value: new Date(
                                     analysis.createdAt
@@ -140,11 +131,11 @@ export default function QuizAnalysisDashboard() {
                                         : analysis.difficulty,
                                 label: "Difficulty",
                             },
-                            // {
-                            //     icon: Zap,
-                            //     value: analysis.quizType,
-                            //     label: "Quiz Type",
-                            // },
+                            {
+                                icon: Zap,
+                                value: analysis.topic === "" ? "General" : analysis.topic[0].toUpperCase() + analysis.topic.slice(1),
+                                label: "Quiz Type",
+                            },
                         ].map((item, idx) => (
                             <ShadcnTooltip key={idx}>
                                 <TooltipTrigger asChild>

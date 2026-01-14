@@ -21,7 +21,6 @@ public class SinglePlayerSession {
     private Long id;
     private Long userId;
     private String difficulty;
-    private String region;
     private int rounds;
     private int currentRound;
     @Enumerated(EnumType.STRING)

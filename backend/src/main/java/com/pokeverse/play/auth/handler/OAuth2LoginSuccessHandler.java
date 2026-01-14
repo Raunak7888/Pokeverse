@@ -36,6 +36,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+        System.out.println("OAuth2 Login Successful");
+        System.out.println(request.getParameter("state"));
+
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
@@ -43,7 +46,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String providerId = oAuth2User.getAttribute("sub");
 
         User user = userRepository.findByEmail(email);
-        RefreshToken refreshToken = null;
+
         if (user == null) {
             System.out.println("Creating new user with email: " + email);
             user = User.builder()
@@ -54,16 +57,14 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                     .provider("GOOGLE")
                     .build();
             userRepository.save(user);
-            refreshToken = refreshTokenService.CreateRefreshTokenForNewUser(user);
-        }else{
-            refreshToken = refreshTokenService.CreateRefreshTokenForOldUser(user);
         }
 
+        RefreshToken refreshToken = refreshTokenService.CreateRefreshTokenForOldUser(user);
 
         String jwt = jwtService.generateToken(user.getEmail(), Map.of("id", user.getId()));
 
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(UserDto.from(user), jwt, refreshToken.getToken());
-        // Respond with tokens as JSON
+
         String redirectUrl = frontendUrl + "?user="+authenticatedUser+"&token=" + jwt + "&refreshToken=" + refreshToken.getToken();
         response.sendRedirect(redirectUrl);
     }

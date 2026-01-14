@@ -13,6 +13,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { SignInDialog } from "./signInDialog";
 import { User } from "../utils/types";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 export default function AuthMenu({
     user,
     isMobile,
@@ -21,6 +22,11 @@ export default function AuthMenu({
     isMobile: boolean;
 }) {
     const clearAuth = useAuthStore((s) => s.clearAuth);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+    if (!mounted) return null;
 
     if (user) {
         return (

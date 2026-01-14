@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -30,7 +29,7 @@ public class QuestionService {
                 .question(questionDto.question())
                 .options(questionDto.options())
                 .answer(questionDto.answer())
-                .region(questionDto.region())
+                .topic(questionDto.topic())
                 .difficulty(questionDto.difficulty())
                 .build();
 
@@ -57,7 +56,7 @@ public class QuestionService {
         question.setQuestion(questionDto.question());
         question.setOptions(questionDto.options());
         question.setAnswer(questionDto.answer());
-        question.setRegion(questionDto.region());
+        question.setTopic(questionDto.topic());
         question.setDifficulty(questionDto.difficulty());
 
         Question updatedQuestion = questionRepository.save(question);
@@ -76,20 +75,5 @@ public class QuestionService {
         return questionRepository.findById(id)
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElse(errorUtil.notFound("Question not found"));
-    }
-
-    public ResponseEntity<?> getQuestionByParams(String region, String difficulty, Integer limit) {
-        List<Question> questions;
-
-        if (region != null && difficulty != null) {
-            questions = questionRepository.findByRegionAndDifficulty(region, difficulty, limit);
-        } else if (region != null) {
-            questions = questionRepository.findByRegion(region, limit);
-        } else if (difficulty != null) {
-            questions = questionRepository.findByDifficulty(difficulty, limit);
-        } else {
-            questions = questionRepository.findAllLimit(limit);
-        }
-        return ResponseEntity.ok(questions);
     }
 }
