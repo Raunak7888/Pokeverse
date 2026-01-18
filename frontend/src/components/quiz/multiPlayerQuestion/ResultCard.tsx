@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, Clock } from "lucide-react";
 import { QuizQuestion } from "@/components/utils/types";
 import { Card } from "./UiComponents";
 import { scaleIn } from "@/components/utils/animation";
+import { SmartText } from "../QuestionUtil";
 
 /**
  * ResultCard
@@ -32,7 +33,7 @@ export const ResultCard: React.FC<{
     const successText = "text-foreground"; // e.g. green via theme
     const successBg = " border-green-600";
     const failText = "text-primary"; // e.g. red/primary via theme
-    const neutralBg = "bg-primary/10 border-primary/30";
+    // const neutralBg = "bg-primary/10 border-primary/30";
 
     return (
         <motion.div
@@ -101,7 +102,7 @@ export const ResultCard: React.FC<{
                                     isCorrect ? successText : "text-primary"
                                 } font-medium break-words`}
                             >
-                                {userAnswer || "—"}
+                                {userAnswer !== "" ? <SmartText text={userAnswer} /> : "—"}
                             </p>
                         </Card>
                     </div>

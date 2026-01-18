@@ -33,6 +33,7 @@ import { useSinglePlayerSessionStore } from "@/store/useSinglePlayerSessionStore
 import { useAnalysisStore } from "@/store/useSinglePlayerAnaylsisStore";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { SmartText } from "@/components/quiz/QuestionUtil";
 
 const COLORS = ["#22c55e", "#ee4035"]; // success green & primary red
 
@@ -126,8 +127,8 @@ export default function QuizAnalysisDashboard() {
                             {
                                 icon: Target,
                                 value:
-                                    analysis.difficulty === ""
-                                        ? "All difficulty"
+                                    analysis.difficulty === "all"
+                                        ? "All Difficulty"
                                         : analysis.difficulty,
                                 label: "Difficulty",
                             },
@@ -468,12 +469,12 @@ export default function QuizAnalysisDashboard() {
                                                     )}
                                                 </div>
                                                 <p className="text-sm line-clamp-2 min-h-10">
-                                                    {q.question}
+                                                    <SmartText text={q.question}/>
                                                 </p>
                                                 <div className="rounded px-2 py-1 bg-foreground/10">
                                                     <p className="text-xs truncate">
                                                         Your answer was{" "}
-                                                        {q.selectedAnswer}
+                                                        <SmartText text={q.selectedAnswer} />
                                                     </p>
                                                 </div>
                                             </div>

@@ -2,6 +2,7 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import confetti from "canvas-confetti";
 import {
     Trophy,
     Crown,
@@ -29,14 +30,41 @@ const ResultLeaderboard = () => {
     const players = useMultiplayerRStore((s) => s.resultsByRoom[code]?.players);
 
     const currentUser = useMultiplayerRStore(
-        (s) => s.resultsByRoom[code]?.currentUser
+        (s) => s.resultsByRoom[code]?.currentUser,
     );
 
     const userRank = useMultiplayerRStore(
-        (s) => s.resultsByRoom[code]?.userRank
+        (s) => s.resultsByRoom[code]?.userRank,
     );
 
     const loading = useMultiplayerRStore((s) => s.loading);
+
+    useEffect(() => {
+        if (userRank != null && userRank<3){const duration = 3 * 1000;
+        const end = Date.now() + duration;
+        const colors = ["#ee4035", "#ffffff", "#2b7fff"];
+
+        (function frame() {
+            confetti({
+                particleCount: 3,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: colors,
+            });
+            confetti({
+                particleCount: 3,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: colors,
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        })();}
+    }, []); // Empty dependency array means this runs once on mount
 
     useEffect(() => {
         if (!code || !userId) return;
@@ -295,10 +323,7 @@ const ResultLeaderboard = () => {
                                                                 {player.name}
                                                             </p>
                                                             {isCurrentUser && (
-                                                                <span
-                                                                    className="px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full"
-                                                                    
-                                                                >
+                                                                <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
                                                                     YOU
                                                                 </span>
                                                             )}
@@ -306,10 +331,10 @@ const ResultLeaderboard = () => {
                                                         <div className="flex items-center gap-2 sm:gap-4 mt-1 text-xs text-gray-500">
                                                             <span className="flex items-center gap-1">
                                                                 <Star className="w-3 h-3" />
-                                                                {
-                                                                    player.accuracy.toFixed(2) 
-                                                                }
-                                                                {" "}% accuracy
+                                                                {player.accuracy.toFixed(
+                                                                    2,
+                                                                )}{" "}
+                                                                % accuracy
                                                             </span>
                                                             <span className="flex items-center gap-1">
                                                                 <TrendingUp className="w-3 h-3" />
@@ -334,10 +359,11 @@ const ResultLeaderboard = () => {
                                                             position === 1
                                                                 ? "text-yellow-400"
                                                                 : position === 2
-                                                                ? "text-gray-400"
-                                                                : position === 3
-                                                                ? "text-orange-400"
-                                                                : "text-foreground"
+                                                                  ? "text-gray-400"
+                                                                  : position ===
+                                                                      3
+                                                                    ? "text-orange-400"
+                                                                    : "text-foreground"
                                                         }
                                                     `}
                                                 >
@@ -350,7 +376,7 @@ const ResultLeaderboard = () => {
                                         {position <= 3 && (
                                             <motion.div
                                                 className={`absolute bottom-0 left-0 right-0 h-1 origin-left ${getRankBorder(
-                                                    position
+                                                    position,
                                                 )}`}
                                                 initial={{ scaleX: 0 }}
                                                 animate={{ scaleX: 1 }}
@@ -393,7 +419,10 @@ const ResultLeaderboard = () => {
                                         </div>
                                         <div>
                                             <p className="text-2xl sm:text-3xl font-bold text-foreground ">
-                                                {currentUser.accuracy.toFixed(2)}%
+                                                {currentUser.accuracy.toFixed(
+                                                    2,
+                                                )}
+                                                %
                                             </p>
                                             <p className="text-xs sm:text-sm text-gray-500">
                                                 Accuracy

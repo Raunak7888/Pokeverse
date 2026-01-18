@@ -21,6 +21,7 @@ export type Question = {
     isCorrect?: boolean | null;
     topic?: string | null;
     answer?: string | null; // backend-confirmed correct answer
+    difficulty?: string | null;
 };
 
 export type Session = {
@@ -78,6 +79,8 @@ export interface QuizQuestion {
     options: string[];
     roundNumber: number;
     totalRounds: number;
+    difficulty: string;
+    topic: string;
     // correctAnswer: string;
     timeLimit: number;
     timeLeft?: number;

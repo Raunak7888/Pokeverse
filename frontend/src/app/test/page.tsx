@@ -1,10 +1,10 @@
-"use client";
+import React from 'react'
+import NotFound from '../not-found'
 
-import "@theme-toggles/react/css/Around.css";
-
-export default function Page() {
-    return (
-        <div className="flex justify-center items-center w-screen h-screen bg-background text-foreground">
-        </div>
-    );
+const page = () => {
+  return (
+    <NotFound/> 
+  )
 }
+
+export default page

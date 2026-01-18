@@ -48,7 +48,7 @@ export default function SinglePlayerQuestionPage() {
     };
 
     return (
-        <div className="flex items-center justify-center w-screen h-screen bg-background">
+        <div className="flex items-center pt-20 justify-center w-screen h-screen bg-background">
             <AnimatePresence mode="wait">
                 {showIntro ? (
                     <Intro key={`intro-${currentIndex}`} />

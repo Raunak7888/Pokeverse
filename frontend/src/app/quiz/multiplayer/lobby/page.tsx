@@ -145,7 +145,7 @@ export default function Lobby() {
     return (
         <>
             <div
-                className="w-screen bg-background md:scale-80 md:mt-5 xl:mt-5 xl:h-[92vh] h-[100vh] flex justify-center items-center p-4 mt-25"
+                className="w-screen bg-background md:scale-80 md:mt-5 xl:mt-5 xl:h-[92vh] h-[100vh] flex justify-center items-center p-4 "
             >
                 <div className="w-full h-full max-w-7xl">
                     {/* Mobile/Tablet Layout */}

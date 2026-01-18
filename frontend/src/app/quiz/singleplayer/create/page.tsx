@@ -38,7 +38,7 @@ export default function SinglePlayer() {
                 {
                     userId: user.id,
                     rounds,
-                    difficulty: difficulty === "ALL" ? "" : difficulty,
+                    difficulty: difficulty === "ALL" ? "all" : difficulty,
                     topic: quizType,
                 }
             );
@@ -56,7 +56,7 @@ export default function SinglePlayer() {
     const selectedTopic = QUIZ_TYPES.find((q) => q.key === quizType);
 
     return (
-        <div className="h-screen w-screen overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-white to-slate-100">
+        <div className="h-screen w-screen  bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-white to-slate-100">
             <div className="h-full w-full flex items-center justify-center ">
                 {!quizType ? (
                     <div className="pt-15">

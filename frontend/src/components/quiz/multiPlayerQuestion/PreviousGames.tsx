@@ -93,7 +93,7 @@ const MatchHistoryCard: React.FC<MatchCardProps> = ({ match }) => {
 
                 {/* Stats */}
                 <div className="text-right text-xs text-neutral-400 space-y-0.5">
-                    <div>{accuracy}% accuracy</div>
+                    <div>{accuracy.toFixed(2)}% accuracy</div>
                     <div>🔥 {streak} streak</div>
                     <div className="text-neutral-500">{date}</div>
                 </div>

@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface QuestionRepository extends JpaRepository<Question, Long> {
@@ -16,14 +17,11 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     @Query(value = """
         SELECT * FROM questions q
-        WHERE q.topic = :topic
+        WHERE (:topic IS NULL OR q.topic = :topic)
         ORDER BY RANDOM()
-        LIMIT :limit
+        LIMIT 1
     """, nativeQuery = true)
-    List<Question> findByTopic(
-            @Param("topic") String topic,
-            @Param("limit") int limit
-    );
+    Optional<Question> findByTopic(@Param("topic") String topic);
 
 
     @Query(value = """
@@ -39,4 +37,5 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
             @Param("limit") int limit
     );
 
+    Question findByQuestion(String question);
 }

@@ -46,7 +46,7 @@ public class SinglePlayerSessionService {
         }
 
         String difficulty = (dto.difficulty().equals("all") || dto.difficulty().isBlank()) ? null : dto.difficulty();
-        String topic = (dto.topic().equals( "all") || dto.topic().isBlank()) ? null : dto.topic();
+        String topic = (dto.topic().equals("ALL") || dto.topic().isBlank()) ? null : dto.topic();
 
 
         List<Question> fetched = questionRepository.findByFilters(
@@ -87,7 +87,6 @@ public class SinglePlayerSessionService {
 
         int order = 1;
         for (Question q : selected) {
-
             session.getAttempts().add(
                     SinglePlayerAttempts.builder()
                             .session(session)
@@ -101,7 +100,9 @@ public class SinglePlayerSessionService {
                     q.getId(),
                     order++,
                     q.getQuestion(),
-                    q.getOptions()
+                    q.getOptions(),
+                    q.getDifficulty(),
+                    q.getTopic()
             ));
         }
 

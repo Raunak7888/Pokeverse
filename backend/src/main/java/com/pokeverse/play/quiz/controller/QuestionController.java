@@ -12,23 +12,48 @@ import org.springframework.web.bind.annotation.*;
 public class QuestionController {
     private final QuestionService questionService;
 
+    @GetMapping("/test")
+    public String testQuestion(@RequestParam String adminId, @RequestParam String adminPassword) {
+        if(questionService.isNotAdmin(adminId, adminPassword)){
+            return "Forbidden: Invalid admin credentials";
+        }else{
+            return "Question Controller is working!";
+        }
+    }
+
     @PostMapping("/add")
-    public ResponseEntity<?> addQuestion(@RequestBody QuestionDto questionDto) {
-        return questionService.addQuestion(questionDto);
+    public ResponseEntity<?> addQuestion(@RequestBody QuestionDto questionDto,@RequestParam String adminId, @RequestParam String adminPassword) {
+        if(questionService.isNotAdmin(adminId, adminPassword)){
+            return ResponseEntity.status(403).body("Forbidden: Invalid admin credentials");
+        }else{
+            return questionService.addQuestion(questionDto);
+        }
     }
 
     @PutMapping("/update")
-    public ResponseEntity<?> updateQuestion(@RequestBody QuestionDto questionDto) {
+    public ResponseEntity<?> updateQuestion(@RequestBody QuestionDto questionDto,@RequestParam String adminId, @RequestParam String adminPassword) {
+        if(questionService.isNotAdmin(adminId, adminPassword)){
+            return ResponseEntity.status(403).body("Forbidden: Invalid admin credentials");
+        }else{
         return questionService.updateQuestion(questionDto);
+        }
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteQuestion(@RequestParam Long id) {
-        return questionService.deleteQuestion(id);
+    public ResponseEntity<?> deleteQuestion(@RequestParam Long id,@RequestParam String adminId, @RequestParam String adminPassword) {
+        if(questionService.isNotAdmin(adminId, adminPassword)){
+            return ResponseEntity.status(403).body("Forbidden: Invalid admin credentials");
+        }else{
+            return questionService.deleteQuestion(id);
+        }
     }
 
     @GetMapping("/question-by-id")
-    public ResponseEntity<?> getQuestionById(@RequestParam Long id) {
-        return questionService.getQuestionById(id);
+    public ResponseEntity<?> getQuestionById(@RequestParam Long id,@RequestParam String adminId, @RequestParam String adminPassword) {
+        if(questionService.isNotAdmin(adminId, adminPassword)){
+            return ResponseEntity.status(403).body("Forbidden: Invalid admin credentials");
+        }else{
+            return questionService.getQuestionById(id);
+        }
     }
 }

@@ -10,6 +10,8 @@ public record RoomQuestionDto(
         String question,
         List<String> options,
         int roundNumber,
+        String difficulty,
+        String topic,
         int totalRounds,
         int timeLimit // in seconds
 ) {
@@ -19,6 +21,8 @@ public record RoomQuestionDto(
                 .question(mpq.getQuestion().getQuestion())
                 .options(mpq.getQuestion().getOptions())
                 .roundNumber(mpq.getRoundNumber())
+                .difficulty(mpq.getQuestion().getDifficulty())
+                .topic(mpq.getQuestion().getTopic())
                 .totalRounds(mpq.getRoom().getTotalRounds())
                 .timeLimit(30) // must match Redis TTL
                 .build();

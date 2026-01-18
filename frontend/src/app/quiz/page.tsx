@@ -33,10 +33,11 @@ export default function QuizPage() {
             document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const handleSinglePlayerStart = () => {
-        router.push("/quiz/singleplayer/create");
-    };
-
+    useEffect(() => {
+        if (mode === "single") {
+            router.push("/quiz/singleplayer/create");
+        }
+    }, [mode, router]);
     const cardVariants = {
         initial: { scale: 1, boxShadow: "0 0 0 rgba(0,0,0,0)" },
         hover: { scale: 1.03, boxShadow: "0 8px 20px rgba(0,0,0,0.15)" },
@@ -118,27 +119,6 @@ export default function QuizPage() {
                                 Test your Pokémon knowledge with customizable
                                 solo challenges.
                             </p>
-                            
-                            {mode === "single" && (
-                                    <motion.div
-                                        key="multi-options"
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: "auto" }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        transition={{
-                                            duration: 0.4,
-                                            ease: "easeInOut",
-                                        }}
-                                    >
-                                        <Button
-                                    onClick={handleSinglePlayerStart}
-                                    className="w-full flex items-center justify-center space-x-2 bg-primary hover:bg-primary/50 text-foreground"
-                                >
-                                    <BadgePlus className="h-5 w-5" />
-                                    <span>Start</span>
-                                </Button>
-                                    </motion.div>
-                                )}
                         </CardContent>
                     </Card>
                 </motion.div>

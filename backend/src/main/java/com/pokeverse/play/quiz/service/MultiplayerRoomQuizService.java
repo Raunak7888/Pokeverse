@@ -75,14 +75,13 @@ public class MultiplayerRoomQuizService {
                     MultiplayerRoomQuizService bean =
                             context.getBean(MultiplayerRoomQuizService.class);
                     bean.tick(roomId);
-                }, 3, QUESTION_INTERVAL_SECONDS, TimeUnit.SECONDS);
+                }, 5, QUESTION_INTERVAL_SECONDS, TimeUnit.SECONDS);
 
         roomTasks.put(roomId, task);
     }
 
     @Transactional
     public void tick(Long roomId) {
-
         if (!redisService.acquireLock(roomId)) return;
 
         try {
@@ -92,9 +91,8 @@ public class MultiplayerRoomQuizService {
                 return;
             }
 
-            if (redisService.hasActiveQuestion(roomId)) {
-                return; // wait for current question to finish
-            }
+            // Logic check: only proceed if there isn't a question currently active
+            if (redisService.hasActiveQuestion(roomId)) return;
 
             int round = redisService.getRound(roomId);
             if (round > room.getTotalRounds()) {
@@ -103,35 +101,31 @@ public class MultiplayerRoomQuizService {
                 return;
             }
 
-            Question q = questionRepository
-                    .findByTopic(room.getTopic(), 1)
-                    .getFirst();
+            String topic = (room.getTopic() == null || room.getTopic().equalsIgnoreCase("ALL"))
+                    ? null : room.getTopic();
 
-            MultiplayerQuestion mpq =
-                    multiplayerQuestionRepository.save(
-                            MultiplayerQuestion.builder()
-                                    .room(room)
-                                    .question(q)
-                                    .roundNumber(round)
-                                    .build()
-                    );
+            // Use Optional to prevent NullPointerException
+            Question q = questionRepository.findByTopic(topic)
+                    .orElseThrow(() -> new RuntimeException("No questions found"));
 
-            // ---- QUESTION STATE INIT ----
+            MultiplayerQuestion mpq = multiplayerQuestionRepository.save(
+                    MultiplayerQuestion.builder()
+                            .room(room)
+                            .question(q)
+                            .roundNumber(round)
+                            .build()
+            );
+
+            // State Init
             redisService.setActiveQuestion(roomId, mpq.getId());
             redisService.setActiveQuestionStart(roomId);
             redisService.initPlayerAnswerState(roomId, room.getPlayers().size());
-            // --------------------------------
 
-            websocketMessingUtil.notifyRoom(
-                    roomId,
-                    "/game/question",
-                    RoomQuestionDto.from(mpq)
-            );
+            websocketMessingUtil.notifyRoom(roomId, "/game/question", RoomQuestionDto.from(mpq));
+            redisService.incrementRound(roomId);
 
-            redisService.incrementRound(roomId); // advance AFTER publish
-
-            log.info("Round {} question sent for room {}", round, roomId);
-
+        } catch (Exception e) {
+            log.error("Error in game tick for room {}: {}", roomId, e.getMessage());
         } finally {
             redisService.releaseLock(roomId);
         }

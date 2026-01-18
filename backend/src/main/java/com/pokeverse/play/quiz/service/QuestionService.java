@@ -6,18 +6,30 @@ import com.pokeverse.play.quiz.utils.ErrorUtil;
 import com.pokeverse.play.quiz.utils.Validate;
 import com.pokeverse.play.repository.QuestionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class QuestionService {
 
     private final QuestionRepository questionRepository;
     private final Validate validate;
     private final ErrorUtil errorUtil;
+    private final String ADMIN_ID;
+    private final String ADMIN_PASSWORD;
+
+    public QuestionService(QuestionRepository questionRepository, Validate validate, ErrorUtil errorUtil,
+                           @Value("${admin.id}") String adminId,
+                           @Value("${admin.password}") String adminPassword) {
+        this.ADMIN_ID = adminId;
+        this.ADMIN_PASSWORD = adminPassword;
+        this.questionRepository = questionRepository;
+        this.validate = validate;
+        this.errorUtil = errorUtil;
+    }
 
     public ResponseEntity<?> addQuestion(QuestionDto questionDto) {
         String validationError = validate.validateQuestionDto(questionDto);
@@ -25,7 +37,12 @@ public class QuestionService {
             return errorUtil.badRequest(validationError);
         }
 
-        Question question = Question.builder()
+        Question question = questionRepository.findByQuestion(questionDto.question());
+        if (question != null) {
+            return errorUtil.badRequest("Question already exists");
+        }
+
+        question = Question.builder()
                 .question(questionDto.question())
                 .options(questionDto.options())
                 .answer(questionDto.answer())
@@ -33,7 +50,14 @@ public class QuestionService {
                 .difficulty(questionDto.difficulty())
                 .build();
 
-        Question savedQuestion = questionRepository.save(question);
+        Question savedQuestion;
+        try{
+            savedQuestion = questionRepository.save(question);
+        }catch(Exception e){
+            System.out.println(question.getQuestion());
+            return ResponseEntity.status(500).body("Internal Server Error: " + e.getMessage());
+        }
+
         return ResponseEntity.ok(savedQuestion);
     }
 
@@ -75,5 +99,9 @@ public class QuestionService {
         return questionRepository.findById(id)
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElse(errorUtil.notFound("Question not found"));
+    }
+
+    public boolean isNotAdmin(String adminId, String adminPassword) {
+        return !ADMIN_ID.equals(adminId) || !ADMIN_PASSWORD.equals(adminPassword);
     }
 }

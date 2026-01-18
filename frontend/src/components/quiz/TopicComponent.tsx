@@ -1,18 +1,26 @@
 "use client";
 
 import clsx from "clsx";
-import { Atom, Brain, Gamepad2, Percent, Sparkles } from "lucide-react";
+import { Atom, Binary, Brain, Code, Gamepad2, LayoutGrid, Sparkles } from "lucide-react";
 
-export type QuizKey = "POKEMON" | "MATHS" | "PHYSICS" | "APTITUDE";
-type QuizType = {
-    key: QuizKey;
-    label: string;
-    description: string;
-    icon: React.ReactNode;
-    color: string;
-};
+export type QuizKey = "ALL" | "POKEMON" | "MATHS" | "PHYSICS" | "APTITUDE" | "COMPUTER_SCIENCE";
+
+// type QuizType = {
+//     key: QuizKey;
+//     label: string;
+//     description: string;
+//     icon: React.ReactNode;
+//     color: string;
+// };
 
 export const QUIZ_TYPES = [
+    {
+        key: "ALL",
+        label: "All Topics",
+        description: "Can you perform all categories?",
+        icon: <LayoutGrid className="w-10 h-10" />,
+        color: "from-purple-500 to-pink-600",
+    },
     {
         key: "POKEMON",
         label: "Pokémon",
@@ -24,7 +32,7 @@ export const QUIZ_TYPES = [
         key: "MATHS",
         label: "Mathematics",
         description: "Solve logic, numbers, and patterns",
-        icon: <Brain className="w-10 h-10" />,
+        icon: <Binary className="w-10 h-10" />,
         color: "from-blue-500 to-indigo-600",
     },
     {
@@ -38,9 +46,16 @@ export const QUIZ_TYPES = [
         key: "APTITUDE",
         label: "Aptitude",
         description: "Test your reasoning and problem-solving skills",
-        icon: <Percent className="w-10 h-10" />,
+        icon: <Brain className="w-10 h-10" />,
         color: "from-yellow-400 to-orange-500",
     },
+    {
+        key: "COMPUTER_SCIENCE",
+        label: "Computer Science",
+        description: "Programming, algorithms, and data structures",
+        icon: <Code className="w-10 h-10" />,
+        color: "from-green-500 to-lime-600",
+    }
 ] as const;
 
 interface TopicComponentProps {
@@ -70,7 +85,7 @@ export default function TopicComponent({
             </div>
 
             {/* Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 mx-20 md:mx-0 gap-8 pb-6">
                 {QUIZ_TYPES.map((q) => (
                     <button
                         key={q.key}

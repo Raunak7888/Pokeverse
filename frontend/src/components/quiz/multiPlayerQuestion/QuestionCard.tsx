@@ -1,17 +1,29 @@
-// QuestionCard.tsx
+"use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Target, Zap, Clock } from "lucide-react"; // Added Clock icon
+import { Clock, CheckCircle2 } from "lucide-react";
+import "katex/dist/katex.min.css";
 import { QuizQuestion } from "@/components/utils/types";
-import { Card, Progress } from "./UiComponents";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Progress } from "./UiComponents"; // Assuming this is your custom Progress
 import { fadeIn } from "@/components/utils/animation";
+import { getDifficultyStyles, optionLetters, SmartText } from "../QuestionUtil";
+
+
+const optionColors = {
+    default: "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-primary/50",
+    selected: "border-primary bg-primary/5 ring-2 ring-primary/20 text-primary font-medium",
+    disabled: "opacity-60 grayscale-[0.3] pointer-events-none",
+};
+
+
 
 export const QuestionCard: React.FC<{
     question: QuizQuestion;
     currentQuestion: number;
     totalQuestions: number;
-    onAnswer: (answer: string) => void; 
+    onAnswer: (answer: string) => void;
     timeLimit: number;
     timeLeft: number;
     disabled: boolean;
@@ -22,114 +34,97 @@ export const QuestionCard: React.FC<{
     onAnswer,
     timeLimit,
     timeLeft,
-    disabled, 
+    disabled,
 }) => {
-    const totalTime = timeLimit;
-    const progress = (timeLeft / totalTime) * 100;
+    const [localSelected, setLocalSelected] = useState<string | null>(null);
+    const progress = (timeLeft / timeLimit) * 100;
+    const isVeryLongQuestion = question.question.length > 180;
 
-    // Helper function for button classes based on disabled state
-    const buttonClasses = (isTimeUp: boolean, isDisabled: boolean) => {
-        const base = "w-full p-5 text-left rounded-xl border-2 transition-all duration-300 group shadow-lg";
-        
-        if (isDisabled || isTimeUp) {
-            // Disabled or time's up appearance (Subtle dark background)
-            return `${base} border-gray-700 bg-gray-800 text-gray-500 cursor-not-allowed opacity-70`;
-        } else {
-            // Active appearance (More vibrant, ready for interaction)
-            return `${base} border-primary/50 bg-secondary hover:bg-primary/70 hover:border-primary/80 transition-all duration-300 shadow-md hover:shadow-xl`;
-        }
+    // Reset local selection when question changes
+    useEffect(() => {
+        setLocalSelected(null);
+    }, [question.questionId]);
+
+    const handleOptionClick = (option: string) => {
+        if (disabled || timeLeft <= 0) return;
+        setLocalSelected(option);
+        onAnswer(option);
     };
-    
-    // Check if time is up, which effectively disables interactions
-    const isTimeUp = timeLeft <= 0;
-    const isInteractionDisabled = disabled || isTimeUp;
 
-    // Determine progress bar color based on time remaining
-    const progressBarColor = progress > 50 ? 'bg-green-500' : progress > 20 ? 'bg-yellow-500' : 'bg-red-500';
+    
 
     return (
-        <motion.div
-            key={question.roundNumber}
-            variants={fadeIn}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.5 }} // Increased duration for smoother transition
-            className="w-full lg:flex-1"
-        >
-            <Card className="shadow-2xl bg-card border border-primary/20">
-                <div className="p-8 md:p-10">
-                    
-                    {/* Header Section: Round & Timer */}
-                    <div className="flex justify-between items-center mb-8 border-b pb-4 border-border/50">
-                        <div className="flex items-center gap-3 text-xl font-extrabold text-primary uppercase tracking-wider">
-                            <Target className="w-6 h-6 text-accent" />
-                            <span>
-                                Round {currentQuestion} of{" "}
-                                {totalQuestions}
-                            </span>
-                        </div>
-                        
-                        {/* Time Left Indicator - Emphasis on Red when low */}
+        <motion.div variants={fadeIn} initial="initial" animate="animate" exit="exit" className="w-full lg:flex-1">
+            <Card className={`relative w-full transition-all duration-500 border-2 border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-[2rem] overflow-visible bg-gradient-to-b from-card to-zinc-50/50 dark:to-zinc-900/50 mx-auto ${isVeryLongQuestion ? "max-w-5xl" : "max-w-3xl"}`}>
+                
+                {/* Floating Badge: Question Number */}
+                <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-6 py-2 rounded-full text-sm font-black tracking-widest shadow-xl border-4 border-white dark:border-zinc-900 z-30">
+                    ROUND {currentQuestion} / {totalQuestions}
+                </div>
+
+                {/* Floating Badge: Difficulty */}
+                <div className={`absolute -top-3 -right-3 px-4 py-1.5 rounded-xl border-2 text-[12px] font-black uppercase tracking-widest shadow-lg backdrop-blur-md z-20 transform rotate-3 ${getDifficultyStyles(question.difficulty)}`}>
+                    {question.difficulty}
+                </div>
+
+                {/* Timer Section */}
+                <div className="pt-10 px-8">
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">Time Remaining</span>
                         <motion.div 
-                            className={`flex items-center gap-2 text-2xl font-black transition-colors duration-300`}
-                            animate={{ 
-                                color: timeLeft <= 5 ? 'rgb(239, 68, 68)' : 'currentColor', // Tailwind red-500
-                                scale: timeLeft <= 5 ? 1.05 : 1,
-                            }}
-                            transition={{ duration: 0.3, repeat: timeLeft <= 5 ? Infinity : 0, repeatType: "reverse" }}
+                            className={`flex items-center gap-1 font-black ${timeLeft <= 5 ? 'text-rose-500' : 'text-primary'}`}
+                            animate={timeLeft <= 5 ? { scale: [1, 1.1, 1] } : {}}
+                            transition={{ repeat: Infinity, duration: 1 }}
                         >
-                            <Clock className="w-6 h-6" />
+                            <Clock className="w-4 h-4" />
                             {timeLeft}s
                         </motion.div>
                     </div>
-                    
-                    {/* Progress Bar - Dynamic color and appearance */}
-                    <Progress
-                        value={progress}
-                        // Use dynamic color and slightly larger bar
-                        className={`h-4 mb-10 shadow-inner rounded-full [&>div]:${progressBarColor} transition-colors duration-500`}
-                    />
+                    <Progress value={progress} className={`h-2 rounded-full transition-all duration-1000 ${timeLeft <= 5 ? "[&>div]:bg-rose-500" : "[&>div]:bg-primary"}`} />
+                </div>
 
+                <div className={`flex flex-col ${isVeryLongQuestion ? "lg:flex-row lg:items-stretch" : ""}`}>
                     {/* Question Text */}
-                    <h2 className="text-3xl font-bold mb-12 text-foreground leading-snug">
-                        {question.question}
-                    </h2>
+                    <div className={`${isVeryLongQuestion ? "lg:w-1/2 lg:border-r dark:lg:border-zinc-800" : "w-full"}`}>
+                        <CardHeader className="pt-8 pb-6 px-8 lg:px-10">
+                            <div className={`font-bold text-zinc-800 dark:text-zinc-100  ${isVeryLongQuestion ? "text-left text-lg sm:text-xl" : "text-center text-xl sm:text-2xl"}`}>
+                                <SmartText text={question.question} />
+                            </div>
+                        </CardHeader>
+                    </div>
 
                     {/* Options Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {question.options.map((option: string, idx: number) => (
-                            <motion.div
-                                key={option}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.1 + idx * 0.1 }} // Staggered entry
-                            >
+                    <div className={`${isVeryLongQuestion ? "lg:w-1/2 flex flex-col justify-center" : "w-full"}`}>
+                        <CardContent className="grid gap-3 px-6 sm:px-8 py-6">
+                            {question.options.map((option, idx) => (
                                 <motion.button
-                                    onClick={() => onAnswer(option)}
-                                    disabled={isInteractionDisabled} 
-                                    whileHover={!isInteractionDisabled ? {
-                                        scale: 1.02,
-                                        boxShadow: "0 8px 20px rgba(0, 0, 0, 0.2)",
-                                    } : {}}
-                                    whileTap={!isInteractionDisabled ? { scale: 0.99 } : {}}
-                                    className={buttonClasses(isTimeUp, disabled)}
+                                    key={option}
+                                    disabled={disabled || timeLeft <= 0}
+                                    onClick={() => handleOptionClick(option)}
+                                    whileHover={!disabled ? { x: 4 } : {}}
+                                    whileTap={!disabled ? { scale: 0.98 } : {}}
+                                    className={`w-full p-4 rounded-2xl border-2 transition-all duration-200 flex items-center justify-between text-left group 
+                                        ${localSelected === option ? optionColors.selected : optionColors.default}
+                                        ${disabled && localSelected !== option ? optionColors.disabled : ""}
+                                    `}
                                 >
-                                    <div className="flex items-center gap-4">
-                                        {/* Option Letter Badge (styled for emphasis) */}
-                                        <span className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-black text-lg shadow-inner">
-                                            {String.fromCharCode(idx + 65)}
+                                    <div className="flex items-center gap-3">
+                                        <span className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm border-2 
+                                            ${localSelected === option ? "bg-primary text-white border-primary" : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"}`}>
+                                            {optionLetters[idx]}
                                         </span>
-                                        {/* Option Text */}
-                                        <span className="flex-1 text-lg text-foreground font-medium">
-                                            {option}
+                                        <span className="text-sm sm:text-base leading-snug">
+                                            <SmartText text={option} />
                                         </span>
-                                        {/* Interaction Indicator */}
-                                        <Zap className={`w-6 h-6 transition-opacity ${!isInteractionDisabled ? 'text-accent opacity-0 group-hover:opacity-100' : 'text-gray-600 opacity-50'}`} />
                                     </div>
+                                    {localSelected === option && (
+                                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                                            <CheckCircle2 className="w-5 h-5 text-primary" />
+                                        </motion.div>
+                                    )}
                                 </motion.button>
-                            </motion.div>
-                        ))}
+                            ))}
+                        </CardContent>
                     </div>
                 </div>
             </Card>
