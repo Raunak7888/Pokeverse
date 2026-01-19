@@ -1,0 +1,26 @@
+# Git
+.git
+.gitignore
+
+# IDEs
+.idea
+.vscode
+*.iml
+
+# Gradle
+.gradle
+build
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Node / frontend (if present later)
+node_modules
+npm-debug.log
+yarn-error.log
+application-dev.yml
+docker-compose.yml

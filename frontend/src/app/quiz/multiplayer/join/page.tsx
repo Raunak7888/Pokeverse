@@ -33,7 +33,7 @@ export default function Join() {
         setCode(digits);
         inputRefs.current[5]?.focus();
 
-    }, []);
+    }, [searchParams]);
 
     const handleChange = (index: number, value: string) => {
         if (value.length > 1) {
@@ -138,7 +138,7 @@ export default function Join() {
     const isCodeComplete = code.every((digit) => digit !== "");
 
     return (
-        <div className="w-screen h-screen flex items-center  justify-center bg-background">
+        <div className="w-screen h-screen flex items-center pt-20 justify-center bg-background">
             <div className="w-full max-w-md py-20  border-2 border-foreground/20  rounded-2xl px-6">
                 <div className="text-center mb-12">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">

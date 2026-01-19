@@ -64,7 +64,7 @@ const ResultLeaderboard = () => {
                 requestAnimationFrame(frame);
             }
         })();}
-    }, []); // Empty dependency array means this runs once on mount
+    }, [userRank]); // Empty dependency array means this runs once on mount
 
     useEffect(() => {
         if (!code || !userId) return;

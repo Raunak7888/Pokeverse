@@ -17,9 +17,7 @@ public class WebsocketMessingUtil {
         messagingTemplate.convertAndSend("/topic/room/" + roomId + destination, payload);
     }
 
-    public void sendToPlayer(Long userId, String destination, Object payload) {
-        messagingTemplate.convertAndSend("/topic/player/" + userId + destination, payload);
-    }
+
 
     public void sendError(Long userId, String message) {
         messagingTemplate.convertAndSend("/topic/player/" + userId + "/error",

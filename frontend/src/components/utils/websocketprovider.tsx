@@ -113,7 +113,9 @@ export const WebSocketProvider: React.FC<{
 
         return () => {
             console.log("🔌 Cleaning up WebSocket connection");
+            // eslint-disable-next-line react-hooks/exhaustive-deps
             activeStompSubsRef.current.clear();
+            // eslint-disable-next-line react-hooks/exhaustive-deps
             subscriptionsRef.current.clear();
             client.deactivate();
             clientRef.current = null;

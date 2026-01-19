@@ -3,11 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { BadgePlus, Gamepad2, Users } from "lucide-react";
+import { Gamepad2, Users } from "lucide-react";
 import Multiplayer from "@/components/quiz/Multiplayer";
 import MultiplayerUserHistory from "@/components/quiz/multiPlayerQuestion/PreviousGames";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/quiz/multiPlayerQuestion/UiComponents";
 
 export default function QuizPage() {
     const [mode, setMode] = useState<"single" | "multi" | "Nothing">("Nothing");

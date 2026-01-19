@@ -176,7 +176,7 @@ public class MultiplayerRoomQuizService {
             roomPlayerRepository.save(player);
         }
 
-        websocketMessingUtil.sendToPlayer(
+        websocketMessingUtil.notifyRoom(
                 dto.roomId(),
                 "/game/answer",
                 Map.of(

@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -14,20 +15,20 @@ import {
     Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import Image from "next/image";
+
 import { useWebSocket } from "@/components/utils/websocketprovider";
 import { useMultiplayerRoomStore } from "@/store/useMultiplayerRoomStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChatStore, ChatMessage } from "@/store/useMessageStore";
-import Image from "next/image";
 
-// Backend message format
+// ---------- Types ----------
 interface MessageDto {
     userId: number;
     msg: string;
     tempId: number;
 }
 
-// Backend chat message response
 interface ChatMessageResponse {
     id?: number;
     userId: number;
@@ -43,175 +44,180 @@ export default function Chat() {
     const [messageInput, setMessageInput] = useState("");
     const [unreadCount, setUnreadCount] = useState(0);
 
-    // Refs
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const isOpenRef = useRef(isOpen);
 
-    // Zustand stores
+    // ---------- Stores ----------
     const { messages, addMessage, updateMessageStatus, clearMessages } =
         useChatStore();
     const { subscribe, send, connected } = useWebSocket();
-    const room = useMultiplayerRoomStore((state) => state.room);
-    const currentUser = useAuthStore((state) => state.user);
+    const room = useMultiplayerRoomStore((s) => s.room);
+    const currentUser = useAuthStore((s) => s.user);
 
+    const roomId = room?.id;
+    const userId = currentUser?.id;
+
+    // ---------- Stable refs ----------
     useEffect(() => {
         isOpenRef.current = isOpen;
-        if (isOpen) {
-            setUnreadCount(0);
-        }
+        if (isOpen) setUnreadCount(0);
     }, [isOpen]);
 
-    // Clear messages when leaving room
-    useEffect(() => {
-        return () => {
-            if (!room) {
-                clearMessages();
-            }
-        };
-    }, [room, clearMessages]);
-
+    // ---------- Scroll ----------
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, []);
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages, scrollToBottom, isOpen]);
+    }, [messages, isOpen, scrollToBottom]);
 
+    // ---------- Focus ----------
     useEffect(() => {
-        if (isOpen && inputRef.current) {
-            const focusTimeout = setTimeout(
-                () => inputRef.current?.focus(),
-                300
-            );
-            return () => clearTimeout(focusTimeout);
-        }
+        if (!isOpen || !inputRef.current) return;
+        const t = setTimeout(() => inputRef.current?.focus(), 300);
+        return () => clearTimeout(t);
     }, [isOpen]);
 
-    // Subscribe to chat messages
-    useEffect(() => {
-        if (!room || !connected) return;
-
-        const chatTopic = `/topic/room/${room.id}/chat`;
-
-        const unsubscribe = subscribe(chatTopic, (msg) => {
+    // ---------- Handlers (STABLE) ----------
+    const onChatMessage = useCallback(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (msg: any) => {
             try {
                 const chatMessage: MessageDto | ChatMessageResponse =
                     JSON.parse(msg.body);
 
-                if (
-                    chatMessage.tempId &&
-                    chatMessage.userId === currentUser?.id
-                ) {
+                // ACK for optimistic message
+                if (chatMessage.tempId && chatMessage.userId === userId) {
                     updateMessageStatus(
                         chatMessage.tempId,
                         "sent",
-                        (chatMessage as ChatMessageResponse).id ||
-                            chatMessage.tempId
+                        (chatMessage as ChatMessageResponse).id ??
+                            chatMessage.tempId,
                     );
                     return;
                 }
 
-                const sender = room.players.find(
-                    (p) => p.userId === chatMessage.userId
+                const sender = room?.players.find(
+                    (p) => p.userId === chatMessage.userId,
                 );
 
-                if (
-                    !isOpenRef.current &&
-                    chatMessage.userId !== currentUser?.id
-                ) {
-                    setUnreadCount((prev) => prev + 1);
+                if (!isOpenRef.current && chatMessage.userId !== userId) {
+                    setUnreadCount((c) => c + 1);
                 }
 
                 addMessage({
-                    id: (chatMessage as ChatMessageResponse).id || Date.now(),
+                    id: (chatMessage as ChatMessageResponse).id ?? Date.now(),
                     userId: chatMessage.userId,
                     user:
                         sender?.name ||
                         (chatMessage as ChatMessageResponse).userName ||
                         "Unknown",
                     text:
-                        (chatMessage as ChatMessageResponse).msg ||
+                        (chatMessage as ChatMessageResponse).msg ??
                         chatMessage.msg,
                     timestamp: new Date(
-                        (chatMessage as ChatMessageResponse).timestamp ||
-                            Date.now()
+                        (chatMessage as ChatMessageResponse).timestamp ??
+                            Date.now(),
                     ),
                     isSystem: false,
                     status: "sent",
                     tempId: chatMessage.tempId,
                 });
-            } catch (err) {
-                console.error("❌ Failed to parse chat message:", err);
+            } catch (e) {
+                console.error("Failed to parse chat message", e);
             }
-        });
+        },
+        [userId, room?.players, addMessage, updateMessageStatus],
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const onErrorMessage = useCallback((msg: any) => {
+        try {
+            const error = JSON.parse(msg.body);
+            toast.error(error.message || "An error occurred");
+        } catch (e) {
+            console.error("Failed to parse error message", e);
+        }
+    }, []);
+
+    // ---------- SUBSCRIPTIONS (FIXED) ----------
+    useEffect(() => {
+        if (!roomId || !connected) return;
+
+        const unsubChat = subscribe(
+            `/topic/room/${roomId}/chat`,
+            onChatMessage,
+        );
 
         return () => {
-            unsubscribe();
+            unsubChat();
         };
-    }, [
-        room,
-        connected,
-        subscribe,
-        currentUser?.id,
-        addMessage,
-        updateMessageStatus,
-    ]);
+    }, [roomId, connected, subscribe, onChatMessage]);
 
-    // Subscribe to error messages
     useEffect(() => {
-        if (!currentUser?.id || !connected) return;
-        const errorTopic = `/topic/player/${currentUser.id}/error`;
+        if (!userId || !connected) return;
 
-        const unsubscribe = subscribe(errorTopic, (msg) => {
-            try {
-                const error = JSON.parse(msg.body);
-                toast.error(error.message || "An error occurred");
-            } catch (err) {
-                console.error("❌ Failed to parse error message:", err);
-            }
-        });
+        const unsubError = subscribe(
+            `/topic/player/${userId}/error`,
+            onErrorMessage,
+        );
 
-        return () => unsubscribe();
-    }, [currentUser?.id, connected, subscribe]);
-
-    const handleSend = () => {
-        const messageText = messageInput.trim();
-        if (!messageText) return;
-        if (!room || !connected || !currentUser?.id) {
-            toast.error("Connection issue");
-            return;
-        }
-
-        const tempId = Math.floor(Date.now() / 1000);
-
-        const messagePayload: MessageDto = {
-            userId: currentUser.id,
-            msg: messageText,
-            tempId: tempId,
+        return () => {
+            unsubError();
         };
+    }, [userId, connected, subscribe, onErrorMessage]);
+
+    // ---------- Cleanup on leave ----------
+    useEffect(() => {
+        return () => {
+            clearMessages();
+        };
+    }, [clearMessages]);
+
+    // ---------- Send ----------
+    const handleSend = () => {
+        const text = messageInput.trim();
+        if (!text || !roomId || !userId || !connected) return;
+
+        const tempId = Date.now();
 
         addMessage({
             id: tempId,
-            userId: currentUser.id,
-            user: currentUser.name || "You",
-            text: messageText,
+            userId,
+            user: currentUser?.name || "You",
+            text,
             timestamp: new Date(),
             isSystem: false,
             status: "sending",
-            tempId: tempId,
+            tempId,
         });
 
-        const success = send(`/app/chat/${room.id}`, messagePayload);
+        const ok = send(`/app/chat/${roomId}`, {
+            userId,
+            msg: text,
+            tempId,
+        });
 
-        if (success) {
-            setMessageInput("");
-        } else {
-            updateMessageStatus(tempId, "failed");
-            toast.error("Failed to send");
-        }
+        if (ok) setMessageInput("");
+        else updateMessageStatus(tempId, "failed");
     };
+
+    // ---------- Helpers ----------
+    const isCurrentUserMessage = (m: ChatMessage) => m.userId === userId;
+
+    const formatTime = (d: Date | string) =>
+        new Date(d).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+
+    const getUserAvatar = (uid: number) =>
+        room?.players.find((p) => p.userId === uid)?.avatar;
+
+    const getUserName = (uid: number, fallback: string) =>
+        room?.players.find((p) => p.userId === uid)?.name ?? fallback;
 
     const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -220,26 +226,7 @@ export default function Chat() {
         }
     };
 
-    const formatTime = (date: Date | string) => {
-        const d = typeof date === "string" ? new Date(date) : date;
-        return d.toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
-
-    const isCurrentUserMessage = (msg: ChatMessage) =>
-        msg.userId === currentUser?.id;
-
-    const getUserAvatar = (userId: number) => {
-        const player = room?.players.find((p) => p.userId === userId);
-        return player?.avatar;
-    };
-
-    const getUserName = (userId: number, fallbackName: string) => {
-        const player = room?.players.find((p) => p.userId === userId);
-        return player?.name || fallbackName;
-    };
+    // ---------- UI (UNCHANGED) ----------
 
     return (
         <>
@@ -405,12 +392,12 @@ export default function Chat() {
                                             {!isCurrentUserMessage(msg) && (
                                                 <Avatar className="w-8 h-8 ring-2 ring-primary/30 flex-shrink-0 mt-auto mb-1">
                                                     {getUserAvatar(
-                                                        msg.userId
+                                                        msg.userId,
                                                     ) ? (
                                                         <Image
                                                             src={
                                                                 getUserAvatar(
-                                                                    msg.userId
+                                                                    msg.userId,
                                                                 )!
                                                             }
                                                             alt={msg.user}
@@ -422,7 +409,7 @@ export default function Chat() {
                                                         <AvatarFallback className="bg-primary/20 text-foreground text-xs">
                                                             {getUserName(
                                                                 msg.userId,
-                                                                msg.user
+                                                                msg.user,
                                                             )[0]?.toUpperCase()}
                                                         </AvatarFallback>
                                                     )}
@@ -437,7 +424,7 @@ export default function Chat() {
                                                     <span className="text-xs font-medium text-foreground/50 ml-1">
                                                         {getUserName(
                                                             msg.userId,
-                                                            msg.user
+                                                            msg.user,
                                                         )}
                                                     </span>
                                                 )}
@@ -447,7 +434,7 @@ export default function Chat() {
                                                     layout
                                                     className={`rounded-2xl px-3 py-2 shadow-sm ${
                                                         isCurrentUserMessage(
-                                                            msg
+                                                            msg,
                                                         )
                                                             ? "bg-primary text-primary-foreground rounded-tr-sm"
                                                             : "bg-foreground/5 text-foreground border border-border rounded-tl-sm"
@@ -463,17 +450,17 @@ export default function Chat() {
                                                         <span
                                                             className={`float-right ml-3 relative top-3 text-[10px] flex items-center gap-0.5 select-none ${
                                                                 isCurrentUserMessage(
-                                                                    msg
+                                                                    msg,
                                                                 )
                                                                     ? "text-primary-foreground/70"
                                                                     : "text-foreground/40"
                                                             }`}
                                                         >
                                                             {formatTime(
-                                                                msg.timestamp
+                                                                msg.timestamp,
                                                             )}
                                                             {isCurrentUserMessage(
-                                                                msg
+                                                                msg,
                                                             ) && (
                                                                 <>
                                                                     {msg.status ===
@@ -499,12 +486,12 @@ export default function Chat() {
                                             {isCurrentUserMessage(msg) && (
                                                 <Avatar className="w-8 h-8 ring-2 ring-primary/50 flex-shrink-0 mt-auto mb-1">
                                                     {getUserAvatar(
-                                                        msg.userId
+                                                        msg.userId,
                                                     ) ? (
                                                         <Image
                                                             src={
                                                                 getUserAvatar(
-                                                                    msg.userId
+                                                                    msg.userId,
                                                                 )!
                                                             }
                                                             alt={msg.user}
@@ -551,7 +538,7 @@ export default function Chat() {
                                             className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-primary transition-colors disabled:opacity-50"
                                             onClick={() =>
                                                 toast.info(
-                                                    "Emoji picker coming soon!"
+                                                    "Emoji picker coming soon!",
                                                 )
                                             }
                                             disabled={!connected}

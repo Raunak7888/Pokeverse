@@ -20,7 +20,10 @@ import { useAuthStore } from "@/store/useAuthStore";
 
 // Utils
 import { fadeIn } from "@/components/utils/animation";
-import { MultiplayerPlayersInRoomDto, QuizQuestion } from "@/components/utils/types";
+import {
+    MultiplayerPlayersInRoomDto,
+    QuizQuestion,
+} from "@/components/utils/types";
 
 interface RoomQuestion {
     questionId: number;
@@ -34,11 +37,11 @@ interface RoomQuestion {
 }
 
 const QuizState = {
+    Initial: "Initial",
     LOADING: "LOADING",
     QUESTION: "QUESTION",
     RESULT: "RESULT",
     FINAL_RESULTS: "FINAL_RESULTS",
-    Initial: "Initial",
 } as const;
 
 type QuizState = (typeof QuizState)[keyof typeof QuizState];
@@ -46,94 +49,116 @@ type QuizState = (typeof QuizState)[keyof typeof QuizState];
 export default function LiveMultiplayerQuiz() {
     const router = useRouter();
     const { subscribe, send } = useWebSocket();
-    
-    // Global State
-    const room = useMultiplayerRoomStore((state) => state.room);
+
+    // ---------- Global State ----------
+    const room = useMultiplayerRoomStore((s) => s.room);
+    const players = useMultiplayerRoomStore((s) => s.room?.players ?? []);
+    const setPlayers = useMultiplayerRoomStore((s) => s.setPlayers);
+    const increasePlayerScore = useMultiplayerRoomStore(
+        (s) => s.IncrementPlayerScore,
+    );
+
     const userId = useAuthStore().user?.id;
-    const players = useMultiplayerRoomStore((state) => state.room?.players ?? []);
-    const setPlayers = useMultiplayerRoomStore((state) => state.setPlayers);
-    const increasePlayerScore = useMultiplayerRoomStore((state) => state.IncrementPlayerScore);
     const playerId = room?.players.find((p) => p.userId === userId)?.id;
 
-    // Local Game State
+    // ---------- Local State ----------
     const [gameState, setGameState] = useState<QuizState>(QuizState.Initial);
-    const [currentQuestion, setCurrentQuestion] = useState<RoomQuestion | null>(null);
+    const [currentQuestion, setCurrentQuestion] = useState<RoomQuestion | null>(
+        null,
+    );
     const [timeLeft, setTimeLeft] = useState(30);
     const [userAnswer, setUserAnswer] = useState<string | null>(null);
     const [isCorrect, setIsCorrect] = useState(false);
     const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
     const [timeSpent, setTimeSpent] = useState(0);
 
-    const roomId = room?.id || "";
+    // ---------- WebSocket Handlers (STABLE) ----------
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const onQuestion = useCallback((message: any) => {
+        try {
+            const question: RoomQuestion = JSON.parse(message.body);
 
-    useEffect(() => {
-        if (!room) {
-            toast.error("Room not found");
-            router.push("/quiz/multiplayer");
-            return;
+            setUserAnswer(null);
+            setIsCorrect(false);
+            setTimeSpent(0);
+            setCurrentQuestion(question);
+            setTimeLeft(question.timeLimit);
+            setGameState(QuizState.QUESTION);
+
+            toast.success(`Round ${question.roundNumber} started`);
+        } catch (e) {
+            console.error("Failed to parse question", e);
         }
+    }, []);
 
-        const questionTopic = `/topic/room/${room.id}/game/question`;
-        const answerTopic = `/topic/player/${room.id}/game/answer`;
-        const endTopic = `/topic/room/${room.id}/game/end`;
-
-        const unsubscribe1 = subscribe(questionTopic, (message) => {
-            try {
-                const question: RoomQuestion = JSON.parse(message.body);
-                
-                // Reset states immediately for the new question
-                setUserAnswer(null);
-                setIsCorrect(false);
-                setTimeSpent(0);
-                setCurrentQuestion(question);
-                setTimeLeft(question.timeLimit); // Reset timer to question limit
-                setGameState(QuizState.QUESTION); // Jump straight to question
-                
-                toast.success(`Round ${question.roundNumber} Started!`);
-            } catch (err) {
-                console.error("❌ Failed to parse question:", err);
-            }
-        });
-
-        const unsubscribe2 = subscribe(answerTopic, (message) => {
+    const onAnswer = useCallback(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (message: any) => {
             try {
                 const data = JSON.parse(message.body);
+
                 if (data.playerId === playerId) {
                     setIsCorrect(data.isCorrect);
                 }
+
                 if (data.isCorrect) {
                     increasePlayerScore(data.playerId, data.score);
                 }
-            } catch (err) {
-                console.error("❌ Failed to parse answer:", err);
+            } catch (e) {
+                console.error("Failed to parse answer", e);
             }
-        });
+        },
+        [playerId, increasePlayerScore],
+    );
 
-        const unsubscribe4 = subscribe(endTopic, (message) => {
+    const onEnd = useCallback(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (message: any) => {
             try {
                 const data = JSON.parse(message.body);
-                const leaderboard = data.leaderboard.map((p: MultiplayerPlayersInRoomDto) => ({
-                    id: p.userId,
-                    name: p.name,
-                    score: p.score,
-                    avatar: p.avatar,
-                    userId: p.userId,
-                }));
+
+                const leaderboard = data.leaderboard.map(
+                    (p: MultiplayerPlayersInRoomDto) => ({
+                        id: p.userId,
+                        name: p.name,
+                        score: p.score,
+                        avatar: p.avatar,
+                        userId: p.userId,
+                    }),
+                );
+
                 setPlayers(leaderboard);
                 setGameState(QuizState.FINAL_RESULTS);
-                router.push(`/quiz/multiplayer/result/${room.code}`);
-            } catch (err) {
-                console.error("❌ Failed to parse end game:", err);
+                router.push(`/quiz/multiplayer/result/${room?.code}`);
+            } catch (e) {
+                console.error("Failed to parse end game", e);
             }
-        });
+        },
+        [router, setPlayers, room?.code],
+    );
+
+    // ---------- WebSocket Subscriptions (CORRECT LIFECYCLE) ----------
+    useEffect(() => {
+        if (!room?.id || !playerId) return;
+
+        const unsubQuestion = subscribe(
+            `/topic/room/${room.id}/game/question`,
+            onQuestion,
+        );
+        const unsubAnswer = subscribe(
+            `/topic/room/${room.id}/game/answer`,
+            onAnswer,
+        );
+        const unsubEnd = subscribe(`/topic/room/${room.id}/game/end`, onEnd);
 
         return () => {
-            unsubscribe1();
-            unsubscribe2();
-            unsubscribe4();
+            unsubQuestion();
+            unsubAnswer();
+            unsubEnd();
         };
-    }, [roomId, userId, subscribe, router, playerId, room, setPlayers, increasePlayerScore]);
+    }, [room?.id, playerId, subscribe, onQuestion, onAnswer, onEnd]);
 
+    // ---------- Timer ----------
     const handleTimeout = useCallback(() => {
         if (!userAnswer && gameState === QuizState.QUESTION) {
             setGameState(QuizState.RESULT);
@@ -141,24 +166,26 @@ export default function LiveMultiplayerQuiz() {
     }, [userAnswer, gameState]);
 
     useEffect(() => {
-        if (gameState === QuizState.QUESTION && currentQuestion) {
-            const timer = setInterval(() => {
-                setTimeLeft((prev) => {
-                    if (prev <= 1) {
-                        clearInterval(timer);
-                        handleTimeout();
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-            return () => clearInterval(timer);
-        }
+        if (gameState !== QuizState.QUESTION || !currentQuestion) return;
+
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    handleTimeout();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
     }, [gameState, currentQuestion, handleTimeout]);
 
+    // ---------- Answer ----------
     const handleAnswer = (answer: string) => {
         if (!currentQuestion || !room || userAnswer) return;
-        
+
         const spent = currentQuestion.timeLimit - timeLeft;
         setTimeSpent(spent);
         setUserAnswer(answer);
@@ -166,7 +193,7 @@ export default function LiveMultiplayerQuiz() {
 
         send(`/app/game/answer`, {
             roomId: room.id,
-            userId: userId,
+            userId,
             questionId: currentQuestion.questionId,
             selectedOption: answer,
         });
@@ -191,7 +218,8 @@ export default function LiveMultiplayerQuiz() {
                         <CountdownTimer
                             secondsBeforeStart={5}
                             onExpire={() => {
-                                if (!currentQuestion) setGameState(QuizState.LOADING);
+                                if (!currentQuestion)
+                                    setGameState(QuizState.LOADING);
                             }}
                         />
                     </div>
@@ -199,7 +227,14 @@ export default function LiveMultiplayerQuiz() {
 
             case QuizState.QUESTION:
                 return (
-                    <motion.div key="quiz" variants={fadeIn} initial="initial" animate="animate" exit="exit" className="w-full">
+                    <motion.div
+                        key="quiz"
+                        variants={fadeIn}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        className="w-full"
+                    >
                         <QuestionCard
                             question={questionForCard}
                             currentQuestion={questionForCard.roundNumber}
@@ -214,7 +249,14 @@ export default function LiveMultiplayerQuiz() {
 
             case QuizState.RESULT:
                 return (
-                    <motion.div key="result" variants={fadeIn} initial="initial" animate="animate" exit="exit" className="w-full">
+                    <motion.div
+                        key="result"
+                        variants={fadeIn}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        className="w-full"
+                    >
                         <ResultCard
                             isCorrect={isCorrect}
                             userAnswer={userAnswer || "Time Out"}
@@ -228,7 +270,9 @@ export default function LiveMultiplayerQuiz() {
                 return (
                     <div className="flex flex-col items-center justify-center p-12 min-h-[50vh] text-center">
                         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mb-4" />
-                        <p className="text-zinc-400 font-medium">Waiting for Quiz Master...</p>
+                        <p className="text-zinc-400 font-medium">
+                            Waiting for Quiz Master...
+                        </p>
                     </div>
                 );
 
@@ -242,7 +286,6 @@ export default function LiveMultiplayerQuiz() {
             {/* Main Wrapper */}
             <div className="max-w-[1600px] mx-auto px-4 lg:px-10 pt-24 lg:pt-32 pb-20">
                 <div className="flex flex-col lg:flex-row gap-8 xl:gap-16 items-start">
-                    
                     {/* LEFT: MAIN QUIZ AREA (Larger weight) */}
                     <main className="w-full lg:flex-[1.8] xl:flex-[2.2] min-w-0">
                         <AnimatePresence mode="wait">
@@ -269,19 +312,32 @@ export default function LiveMultiplayerQuiz() {
             <AnimatePresence>
                 {isLeaderboardOpen && (
                     <div className="fixed inset-0 z-[100] lg:hidden">
-                        <motion.div 
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/90 backdrop-blur-md" 
-                            onClick={() => setIsLeaderboardOpen(false)} 
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/90 backdrop-blur-md"
+                            onClick={() => setIsLeaderboardOpen(false)}
                         />
-                        <motion.div 
-                            initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        <motion.div
+                            initial={{ x: "100%" }}
+                            animate={{ x: 0 }}
+                            exit={{ x: "100%" }}
+                            transition={{
+                                type: "spring",
+                                damping: 25,
+                                stiffness: 200,
+                            }}
                             className="absolute right-0 top-0 h-full w-[85%] max-w-sm bg-zinc-950 border-l border-zinc-800 p-6 flex flex-col"
                         >
                             <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-2xl font-black uppercase tracking-tighter">Standings</h2>
-                                <button onClick={() => setIsLeaderboardOpen(false)} className="p-2 bg-zinc-800 rounded-full text-zinc-400 hover:text-white transition-colors">
+                                <h2 className="text-2xl font-black uppercase tracking-tighter">
+                                    Standings
+                                </h2>
+                                <button
+                                    onClick={() => setIsLeaderboardOpen(false)}
+                                    className="p-2 bg-zinc-800 rounded-full text-zinc-400 hover:text-white transition-colors"
+                                >
                                     <X size={20} />
                                 </button>
                             </div>
